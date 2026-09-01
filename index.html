@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angkringan Lor Dalan - Warung Makan Tradisional</title>
+    <link rel="icon" type="image/jpeg" href="AGK.jpg">
+    <link rel="apple-touch-icon" href="AGK.jpg">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">
+                    <img src="AGK.jpg" alt="Logo Angkringan Lor Dalan">
+                </div>
+                <div>
+                    <h2>ANGKRINGAN</h2>
+                    <span>LOR DALAN</span>
+                    <p>Sambi Gedong, Tawengan, Sambi, Boyolali</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <p class="nav-label">MENU UTAMA</p>
+                <a href="#makanan" class="nav-item active" onclick="setActive(this)">
+                    <span>1. Daftar Makanan</span>
+                </a>
+                <a href="#minuman" class="nav-item" onclick="setActive(this)">
+                    <span>2. Daftar Minuman</span>
+                </a>
+                <a href="#daftar" class="nav-item" onclick="setActive(this)">
+                    <span>3. Daftar Pesanan</span>
+                </a>
+                <a href="#pembayaran" class="nav-item" onclick="setActive(this)">
+                    <span>4. Pembayaran</span>
+                </a>
+                <p class="nav-label" style="margin-top:18px;">WARUNG</p>
+                <a href="#" class="nav-item" onclick="alert('Angkringan Lor Dalan\nSambi Gedong, Tawengan, Sambi, Boyolali\nBuka: 17.00 - 02.00 WIB\nWA: 0812-3456-7890')">
+                    <span>Bantuan</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-stat">
+                    <div>
+                        <strong id="sideTotal">0</strong>
+                        <span>Pesanan Hari Ini</span>
+                    </div>
+                </div>
+                <div class="sidebar-stat" style="margin-top:10px; background: rgba(255,255,255,0.08);">
+                    <div>
+                        <strong id="sideOmzet" style="font-size:15px;">Rp 0</strong>
+                        <span>Total Omzet</span>
+                    </div>
+                </div>
+                <p class="sidebar-copy">&copy; 2026 Angkringan Lor Dalan<br><small>Hangat - Merakyat - Ngangeni</small></p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-inner">
+                    <div class="topbar-title" style="display:flex; align-items:center; gap:14px;">
+                        <img src="AGK.jpg" alt="Logo" style="width:48px; height:48px; border-radius:12px; object-fit:cover; border:2px solid rgba(255,255,255,0.3); background:white; flex-shrink:0;">
+                        <div>
+                            <h3>Angkringan Lor Dalan</h3>
+                            <p>Cita Rasa Jogja - Harga Merakyat - Buka Sore Sampai Dini Hari</p>
+                        </div>
+                    </div>
+                    <div class="topbar-info">
+                        <span>Sambi, Boyolali</span>
+                        <span class="badge">Buka: 17.00 - 02.00</span>
+                        <span id="jamLive" class="badge badge-live"></span>
+                    </div>
+                </div>
+                <div class="hero-banner">
+                    <div class="hero-text" style="display:flex; align-items:center; gap:12px;">
+                        <img src="AGK.jpg" alt="Logo" style="width:42px; height:42px; border-radius:10px; object-fit:cover; border:2px solid #451a03; background:white; flex-shrink:0;">
+                        <div>
+                            <h4>Selamat Datang di Angkringan Lor Dalan!</h4>
+                            <p>Nasi Kucing - Sate-Satean - Gorengan Anget - Kopi Joss Arang - Wedang Jahe - Indomie</p>
+                        </div>
+                    </div>
+                    <div class="hero-badge">
+                        <span>0812-3456-7890</span>
+                        <span class="promo">GRATIS Kerupuk!</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="wrapper">
+
+                <!-- 1. DAFTAR MAKANAN -->
+                <div class="card" id="makanan" style="margin-bottom:28px;">
+                    <div class="card-header">
+                        <h3>1. Daftar Makanan</h3>
+                        <span class="nota-badge" id="badgeMakanan">11 Menu</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <p style="font-size:12px; color:#78716c; margin-bottom:14px;">Klik + maka otomatis langsung masuk ke <strong>3. Daftar Pesanan</strong> dan <strong>4. Pembayaran</strong>. Tidak perlu klik Simpan manual. Semua makanan dimasak fresh, harga merakyat.</p>
+                        <div class="menu-grid" id="menuMakanan">
+                            <!-- Diisi via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. DAFTAR MINUMAN -->
+                <div class="card" id="minuman" style="margin-bottom:28px;">
+                    <div class="card-header">
+                        <h3>2. Daftar Minuman</h3>
+                        <span class="nota-badge" id="badgeMinuman">5 Menu</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <p style="font-size:12px; color:#78716c; margin-bottom:14px;">Klik + maka otomatis langsung masuk ke <strong>3. Daftar Pesanan</strong> dan <strong>4. Pembayaran</strong>. Minuman hangat & dingin, cocok untuk temani makan lesehan.</p>
+                        <div class="menu-grid" id="menuMinuman">
+                            <!-- Diisi via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layout">
+                    <!-- Form Pesanan -->
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <h3>Buat Pesanan Baru</h3>
+                            <span id="noNota" class="nota-badge">No: ANG-0001</span>
+                        </div>
+
+                        <form id="formPesanan" onsubmit="return false;">
+                            <div class="section-title">Data Pelanggan</div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="nama">Nama Pelanggan <span>*</span></label>
+                                    <input id="nama" type="text" placeholder="Contoh: Mas Gilang / Mbak Sari">
+                                </div>
+                                <div class="form-group">
+                                    <label for="meja">No. Meja / Pesanan <span>*</span></label>
+                                    <select id="meja">
+                                        <option value="">-- Pilih --</option>
+                                        <option value="Meja 01">Meja 01</option>
+                                        <option value="Meja 02">Meja 02</option>
+                                        <option value="Meja 03">Meja 03</option>
+                                        <option value="Meja 04">Meja 04</option>
+                                        <option value="Meja 05">Meja 05</option>
+                                        <option value="Meja 06">Meja 06</option>
+                                        <option value="Meja 07">Meja 07</option>
+                                        <option value="Meja 08">Meja 08</option>
+                                        <option value="Lesehan 1">Lesehan 1</option>
+                                        <option value="Lesehan 2">Lesehan 2</option>
+                                        <option value="Bungkus / Take Away">Bungkus / Take Away</option>
+                                        <option value="Ojek Online">Ojek Online (GoFood/Grab)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="wa">No. WhatsApp</label>
+                                    <input id="wa" type="tel" placeholder="0812xxxx (opsional)">
+                                </div>
+                                <div class="form-group">
+                                    <label for="jmlOrang">Jumlah Orang</label>
+                                    <select id="jmlOrang">
+                                        <option>1 Orang</option>
+                                        <option>2 Orang</option>
+                                        <option>3 Orang</option>
+                                        <option>4 Orang</option>
+                                        <option>5 Orang</option>
+                                        <option>Rombongan (>5)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top:18px;">
+                                <label>Pesanan Dipilih <span id="jumlahItem" style="background:#fef3c7; padding:2px 8px; border-radius:20px; font-size:11px;">0 item</span></label>
+                                <div id="keranjang" class="keranjang">
+                                    <p class="keranjang-empty">Belum ada menu dipilih. Klik + pada Daftar Makanan / Minuman di atas! Akan otomatis tercatat di Daftar Pesanan.</p>
+                                </div>
+                                <div class="total-bar">
+                                    <span>Total Bayar:</span>
+                                    <strong id="totalBayar">Rp 0</strong>
+                                </div>
+                            </div>
+
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="pembayaran">Metode Bayar</label>
+                                    <select id="pembayaran">
+                                        <option>Tunai (Cash)</option>
+                                        <option>QRIS</option>
+                                        <option>Transfer</option>
+                                        <option>Bayar Nanti (Bon)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="status">Status Pesanan</label>
+                                    <select id="status">
+                                        <option>Antri</option>
+                                        <option>Proses Masak</option>
+                                        <option>Siap Saji</option>
+                                        <option>Selesai / Lunas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="tanggal">Tanggal Pesan</label>
+                                    <input id="tanggal" type="date">
+                                </div>
+                                <div class="form-group">
+                                    <label for="jamPesan">Jam Pesan</label>
+                                    <input id="jamPesan" type="time">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="catatan">Catatan / Request (Level Pedas, Tanpa Sayur, dll)</label>
+                                <input id="catatan" type="text" placeholder="Contoh: Nasi kucing 2 pedas, Kopi joss jangan terlalu manis">
+                            </div>
+
+                            <div class="actions">
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+                                <button type="button" class="btn btn-primary" onclick="simpanPesanan()">Simpan Pesanan</button>
+                            </div>
+                        </form>
+
+                        <div id="hasil" class="hasil hidden"></div>
+                    </div>
+
+                    <!-- Side Info -->
+                    <div class="side">
+                        <div class="card info-card" id="menuFavorit">
+                            <h3>Menu Favorit Lor Dalan</h3>
+                            <div class="menu-favorit-list">
+                                <div class="fav-item">
+                                    <span class="fav-icon">NK</span>
+                                    <div>
+                                        <strong>Nasi Kucing Sambal Teri</strong>
+                                        <small>Rp 5.000 - Paling Laris!</small>
+                                    </div>
+                                    <span class="fav-badge">4.9</span>
+                                </div>
+                                <div class="fav-item">
+                                    <span class="fav-icon">KJ</span>
+                                    <div>
+                                        <strong>Kopi Joss Arang Panas</strong>
+                                        <small>Rp 8.000 - Khas Jogja</small>
+                                    </div>
+                                    <span class="fav-badge">4.8</span>
+                                </div>
+                                <div class="fav-item">
+                                    <span class="fav-icon">ST</span>
+                                    <div>
+                                        <strong>Sate Usus & Telur Puyuh</strong>
+                                        <small>Rp 3.500 - Gurih Pedas</small>
+                                    </div>
+                                    <span class="fav-badge">4.9</span>
+                                </div>
+                                <div class="fav-item">
+                                    <span class="fav-icon">WJ</span>
+                                    <div>
+                                        <strong>Wedang Jahe Susu</strong>
+                                        <small>Rp 8.000 - Hangat Malam</small>
+                                    </div>
+                                    <span class="fav-badge">4.7</span>
+                                </div>
+                                <div class="fav-item">
+                                    <span class="fav-icon">IM</span>
+                                    <div>
+                                        <strong>Indomie Goreng + Telor</strong>
+                                        <small>Rp 13.000 - Porsi Jumbo</small>
+                                    </div>
+                                    <span class="fav-badge">4.8</span>
+                                </div>
+                            </div>
+                            <div class="alert">
+                                <p><strong>Promo Lor Dalan:</strong> Beli 5 Nasi Kucing Gratis 1 Gorengan! Berlaku jam 17.00-19.00.</p>
+                            </div>
+                        </div>
+
+                        <div class="card info-card">
+                            <h3>Alur Pesan di Angkringan</h3>
+                            <ol class="steps">
+                                <li><span>1</span> Pilih meja & pesan menu</li>
+                                <li><span>2</span> Pesanan dimasak (5-10 menit)</li>
+                                <li><span>3</span> Makanan diantar ke meja</li>
+                                <li><span>4</span> Makan santai & ngobrol</li>
+                                <li><span>5</span> Bayar di kasir & kembali lagi!</li>
+                            </ol>
+                            <div class="alert" style="background:#fefce8; border-color:#fde68a; color:#854d0e;">
+                                <p><strong>Info:</strong> Dilarang bawa makanan dari luar. Jaga kebersihan, buang sampah pada tempatnya. Matur nuwun!</p>
+                            </div>
+                        </div>
+
+                        <div class="card stat-card">
+                            <div class="stat">
+                                <div>
+                                    <strong id="totalData">0</strong>
+                                    <span>Total Pesanan</span>
+                                </div>
+                            </div>
+                            <div class="stat">
+                                <div>
+                                    <strong id="totalAntri">0</strong>
+                                    <span>Antri / Proses</span>
+                                </div>
+                            </div>
+                            <div class="stat" style="background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;">
+                                <div>
+                                    <strong id="totalOmzet">Rp 0</strong>
+                                    <span>Omzet Hari Ini</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card info-card" style="padding:18px; background: linear-gradient(135deg,#451a03,#92400e); color:white; border:none;">
+                            <h3 style="color:white; margin-bottom:10px;">Filosofi Lor Dalan</h3>
+                            <p style="font-size:13px; line-height:1.7; opacity:0.95; font-style:italic;">"Angkringan bukan sekadar warung, tapi tempat cerita. Di Lor Dalan, semua sama — mahasiswa, pekerja, bos, semua duduk lesehan, ngopi joss, udud, ngobrol ngalor-ngidul. Murah, hangat, ngangenin."</p>
+                            <p style="font-size:11px; margin-top:10px; opacity:0.7;">- Pak Dhalan, Pemilik Angkringan Lor Dalan (sejak 2015)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. DAFTAR PESANAN -->
+                <div class="card table-card" id="daftar">
+                    <div class="card-header">
+                        <h3>3. Daftar Pesanan</h3>
+                        <div class="table-actions">
+                            <input id="cari" type="text" placeholder="Cari nama / meja / menu..." oninput="filterData()">
+                            <button class="btn btn-small btn-danger" onclick="hapusSemua()">Hapus Semua</button>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table id="tabelPesanan">
+                            <thead>
+                                <tr>
+                                    <th>No Nota</th>
+                                    <th>Waktu</th>
+                                    <th>Pelanggan</th>
+                                    <th>Pesanan</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyPesanan">
+                                <tr class="empty-row"><td colspan="7">Belum ada pesanan. Klik + pada Daftar Makanan / Minuman di atas, otomatis langsung masuk ke sini!</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. PEMBAYARAN -->
+                <div class="card table-card" id="pembayaran">
+                    <div class="card-header">
+                        <h3>4. Pembayaran</h3>
+                        <span class="nota-badge" id="badgePembayaran">0 Transaksi</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <!-- Ringkasan Bayar -->
+                        <div class="grid-2" style="margin-bottom:18px;">
+                            <div class="stat" style="background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;">
+                                <div>
+                                    <strong id="bayarOmzet">Rp 0</strong>
+                                    <span>Total Omzet Keseluruhan</span>
+                                </div>
+                            </div>
+                            <div class="stat" style="background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color:#86efac;">
+                                <div>
+                                    <strong id="bayarLunas">Rp 0</strong>
+                                    <span>Sudah Lunas (Selesai)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom:18px;">
+                            <div class="stat">
+                                <div>
+                                    <strong id="bayarBelum">Rp 0</strong>
+                                    <span>Belum Lunas (Antri/Proses/Siap)</span>
+                                </div>
+                            </div>
+                            <div class="stat">
+                                <div>
+                                    <strong id="bayarInfo">0 Lunas / 0 Belum</strong>
+                                    <span>Status Pembayaran</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rincian Metode Bayar -->
+                        <div class="nota-items" style="margin-bottom:18px;">
+                            <h5>Rincian Metode Pembayaran</h5>
+                            <div id="rincianMetode" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:10px;">
+                                <div style="background:#fffbeb; padding:12px; border-radius:10px; border:1px solid #fde68a; text-align:center;">
+                                    <strong style="font-size:11px; color:#78716c; display:block;">TUNAI</strong>
+                                    <span id="metodeTunai" style="font-weight:800; color:#92400e;">Rp 0 (0)</span>
+                                </div>
+                                <div style="background:#fffbeb; padding:12px; border-radius:10px; border:1px solid #fde68a; text-align:center;">
+                                    <strong style="font-size:11px; color:#78716c; display:block;">QRIS</strong>
+                                    <span id="metodeQris" style="font-weight:800; color:#92400e;">Rp 0 (0)</span>
+                                </div>
+                                <div style="background:#fffbeb; padding:12px; border-radius:10px; border:1px solid #fde68a; text-align:center;">
+                                    <strong style="font-size:11px; color:#78716c; display:block;">TRANSFER</strong>
+                                    <span id="metodeTransfer" style="font-weight:800; color:#92400e;">Rp 0 (0)</span>
+                                </div>
+                                <div style="background:#fffbeb; padding:12px; border-radius:10px; border:1px solid #fde68a; text-align:center;">
+                                    <strong style="font-size:11px; color:#78716c; display:block;">BON</strong>
+                                    <span id="metodeBon" style="font-weight:800; color:#dc2626;">Rp 0 (0)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>No Nota</th>
+                                        <th>Pelanggan / Meja</th>
+                                        <th>Total</th>
+                                        <th>Metode</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyPembayaran">
+                                    <tr class="empty-row"><td colspan="6">Belum ada transaksi pembayaran.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p style="margin-top:12px; font-size:11px; color:#78716c;">Keterangan: Status Selesai / Lunas = sudah bayar. Antri / Proses / Siap = belum bayar / perlu tagih di kasir.</p>
+                    </div>
+                </div>
+
+                <footer class="footer">
+                    <p><strong>Angkringan Lor Dalan</strong> &bull; Sambi Gedong, Tawengan, Sambi, Boyolali &bull; Buka 17.00 - 02.00 WIB</p>
+                    <p style="margin-top:6px; font-size:11px;">Matur Nuwun Sudah Mampir, Lur! - Harga Merakyat - Rasa Nikmat - Sambi Gedong, Tawengan, Sambi, Boyolali</p>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
