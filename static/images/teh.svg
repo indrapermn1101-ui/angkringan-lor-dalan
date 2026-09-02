@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient></defs>
+<rect width="200" height="200" rx="24" fill="url(#bg)" stroke="#fde68a" stroke-width="3"/>
+<ellipse cx="100" cy="158" rx="62" ry="12" fill="#fde68a" opacity="0.6"/>
+<g transform="translate(100,108)">
+  <ellipse cx="0" cy="36" rx="42" ry="10" fill="#78350f" opacity="0.12"/>
+  <g transform="translate(-18,4)">
+    <path d="M -22 -28 L -16 24 L 16 24 L 22 -28 Z" fill="white" stroke="#e7e5e4" stroke-width="1.8"/>
+    <path d="M -22 -28 L 22 -28 L 20 -22 L -20 -22 Z" fill="#fde68a"/>
+    <path d="M 22 -16 C 32 -16, 32 4, 22 4" fill="none" stroke="#e7e5e4" stroke-width="3" stroke-linecap="round"/>
+    <path d="M -18 -12 L -14 20 L 14 20 L 18 -12 Z" fill="#d97706"/><path d="M -18 -12 L 18 -12 L 16 -8 L -16 -8 Z" fill="#b45309" opacity="0.3"/>
+    <rect x="-8" y="-22" width="16" height="12" rx="2" fill="#fef3c7" stroke="#92400e" stroke-width="1"/>
+    <text x="0" y="-14" text-anchor="middle" font-size="5" fill="#92400e" font-weight="800">TEH</text>
+    <line x1="0" y1="-22" x2="26" y2="-34" stroke="#a8a29e" stroke-width="1"/><rect x="24" y="-36" width="8" height="6" rx="1" fill="white" stroke="#a8a29e" stroke-width="0.8"/>
+    <g stroke="#a8a29e" stroke-width="1" opacity="0.3" fill="none" stroke-linecap="round"><path d="M -6 -32 C -7 -37, -5 -39, -6 -44"/><path d="M 6 -32 C 5 -37, 7 -39, 6 -44"/></g>
+  </g>
+  <g transform="translate(20,6)">
+    <path d="M -16 -30 L -12 26 L 12 26 L 16 -30 Z" fill="#cffafe" fill-opacity="0.5" stroke="#67e8f9" stroke-width="1.5"/>
+    <path d="M -14 -10 L -10 22 L 10 22 L 14 -10 Z" fill="#d97706" opacity="0.75"/>
+    <rect x="-10" y="-6" width="10" height="10" rx="2" fill="white" stroke="#a5f3fc" stroke-width="1" opacity="0.9" transform="rotate(-12 -5 -1)"/>
+    <rect x="2" y="-2" width="9" height="9" rx="2" fill="white" stroke="#a5f3fc" stroke-width="1" opacity="0.9" transform="rotate(10 6 2)"/>
+    <rect x="6" y="-38" width="4" height="34" rx="2" fill="#f59e0b" stroke="#d97706" stroke-width="0.8" transform="rotate(12 8 -21)"/>
+  </g>
+</g>
+<text x="100" y="183" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="800" fill="#451a03">TEH HANGAT / ES TEH</text>
+</svg>

@@ -1,0 +1,18 @@
+# Angkringan Lor Dalan - GitIgnore
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+venv/
+backend/__pycache__/
+backend/routers/__pycache__/
+backend/angkringan.db
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.vscode/settings.json
+.DS_Store
+Thumbs.db

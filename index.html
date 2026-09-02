@@ -4,19 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Angkringan Lor Dalan - Warung Makan Tradisional</title>
-    <link rel="icon" type="image/jpeg" href="AGK.jpg">
-    <link rel="apple-touch-icon" href="AGK.jpg">
-    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="static/assets/AGK.jpg">
+    <link rel="apple-touch-icon" href="static/assets/AGK.jpg">
+    <link rel="stylesheet" href="static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <script>
+    // === GUARD: Dashboard wajib login via login.html ===
+    // Jika tidak ada token atau token invalid, redirect ke login.html
+    (function(){
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token){
+            // Belum login, arahkan ke login.html (entry point)
+            // Hindari loop jika sudah di login.html
+            if(!location.pathname.endsWith("login.html")){
+                location.replace("login.html");
+            }
+        } else {
+            // Jika ada token tapi bukan fallback lokal, verifikasi ke API (async)
+            if(token !== "local-fallback-token"){
+                const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+                fetch(API_BASE + "/auth/me", {headers:{"Authorization":"Bearer "+token}})
+                .then(r=>{ if(!r.ok) throw new Error("invalid"); return r.json(); })
+                .then(u=>{ sessionStorage.setItem("ald_user", u.username); sessionStorage.setItem("ald_role", u.role); })
+                .catch(()=>{ sessionStorage.removeItem("ald_token"); localStorage.removeItem("ald_token"); if(!location.pathname.endsWith("login.html")) location.replace("login.html"); });
+            }
+        }
+    })();
+    </script>
 
     <div class="app">
         <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="brand-logo">
-                    <img src="AGK.jpg" alt="Logo Angkringan Lor Dalan">
+                    <img src="static/assets/AGK.jpg" alt="Logo Angkringan Lor Dalan">
                 </div>
                 <div>
                     <h2>ANGKRINGAN</h2>
@@ -58,6 +81,8 @@
                         <span>Total Omzet</span>
                     </div>
                 </div>
+                <button onclick="handleLogout()" style="width:100%; margin-top:12px; background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; backdrop-filter:blur(6px);">Keluar (Logout)</button>
+                <p style="font-size:10px; color:rgba(255,255,255,0.6); text-align:center; margin-top:6px;" id="loginUserInfo">-</p>
                 <p class="sidebar-copy">&copy; 2026 Angkringan Lor Dalan<br><small>Hangat - Merakyat - Ngangeni</small></p>
             </div>
         </aside>
@@ -68,7 +93,7 @@
             <header class="topbar">
                 <div class="topbar-inner">
                     <div class="topbar-title" style="display:flex; align-items:center; gap:14px;">
-                        <img src="AGK.jpg" alt="Logo" style="width:48px; height:48px; border-radius:12px; object-fit:cover; border:2px solid rgba(255,255,255,0.3); background:white; flex-shrink:0;">
+                        <img src="static/assets/AGK.jpg" alt="Logo" style="width:48px; height:48px; border-radius:12px; object-fit:cover; border:2px solid rgba(255,255,255,0.3); background:white; flex-shrink:0;">
                         <div>
                             <h3>Angkringan Lor Dalan</h3>
                             <p>Cita Rasa Jogja - Harga Merakyat - Buka Sore Sampai Dini Hari</p>
@@ -82,7 +107,7 @@
                 </div>
                 <div class="hero-banner">
                     <div class="hero-text" style="display:flex; align-items:center; gap:12px;">
-                        <img src="AGK.jpg" alt="Logo" style="width:42px; height:42px; border-radius:10px; object-fit:cover; border:2px solid #451a03; background:white; flex-shrink:0;">
+                        <img src="static/assets/AGK.jpg" alt="Logo" style="width:42px; height:42px; border-radius:10px; object-fit:cover; border:2px solid #451a03; background:white; flex-shrink:0;">
                         <div>
                             <h4>Selamat Datang di Angkringan Lor Dalan!</h4>
                             <p>Nasi Kucing - Sate-Satean - Gorengan Anget - Kopi Joss Arang - Wedang Jahe - Indomie</p>
@@ -240,7 +265,7 @@
                             <h3>Menu Favorit Lor Dalan</h3>
                             <div class="menu-favorit-list">
                                 <div class="fav-item">
-                                    <span class="fav-icon">NK</span>
+                                    <img src="static/images/nasi-kucing.jpg" alt="Nasi Kucing" style="width:48px; height:48px; border-radius:10px; object-fit:cover; border:1.5px solid #fde68a; background:white; flex-shrink:0;" onerror="this.src='static/images/nasi-kucing.svg'">
                                     <div>
                                         <strong>Nasi Kucing Sambal Teri</strong>
                                         <small>Rp 5.000 - Paling Laris!</small>
@@ -248,7 +273,7 @@
                                     <span class="fav-badge">4.9</span>
                                 </div>
                                 <div class="fav-item">
-                                    <span class="fav-icon">KJ</span>
+                                    <img src="static/images/kopi-joss.jpg" alt="Kopi Joss" style="width:48px; height:48px; border-radius:10px; object-fit:cover; border:1.5px solid #fde68a; background:white; flex-shrink:0;" onerror="this.src='static/images/kopi-joss.svg'">
                                     <div>
                                         <strong>Kopi Joss Arang Panas</strong>
                                         <small>Rp 8.000 - Khas Jogja</small>
@@ -256,7 +281,7 @@
                                     <span class="fav-badge">4.8</span>
                                 </div>
                                 <div class="fav-item">
-                                    <span class="fav-icon">ST</span>
+                                    <img src="static/images/sate-telur.jpg" alt="Sate Telur" style="width:48px; height:48px; border-radius:10px; object-fit:cover; border:1.5px solid #fde68a; background:white; flex-shrink:0;" onerror="this.src='static/images/sate-telur.svg'">
                                     <div>
                                         <strong>Sate Usus & Telur Puyuh</strong>
                                         <small>Rp 3.500 - Gurih Pedas</small>
@@ -264,7 +289,7 @@
                                     <span class="fav-badge">4.9</span>
                                 </div>
                                 <div class="fav-item">
-                                    <span class="fav-icon">WJ</span>
+                                    <img src="static/images/wedang-jahe.jpg" alt="Wedang Jahe" style="width:48px; height:48px; border-radius:10px; object-fit:cover; border:1.5px solid #fde68a; background:white; flex-shrink:0;" onerror="this.src='static/images/wedang-jahe.svg'">
                                     <div>
                                         <strong>Wedang Jahe Susu</strong>
                                         <small>Rp 8.000 - Hangat Malam</small>
@@ -272,7 +297,7 @@
                                     <span class="fav-badge">4.7</span>
                                 </div>
                                 <div class="fav-item">
-                                    <span class="fav-icon">IM</span>
+                                    <img src="static/images/indomie.jpg" alt="Indomie" style="width:48px; height:48px; border-radius:10px; object-fit:cover; border:1.5px solid #fde68a; background:white; flex-shrink:0;" onerror="this.src='static/images/indomie.svg'">
                                     <div>
                                         <strong>Indomie Goreng + Telor</strong>
                                         <small>Rp 13.000 - Porsi Jumbo</small>
@@ -438,6 +463,41 @@
                     </div>
                 </div>
 
+                <!-- SUPERADMIN PANEL - APPROVAL KASIR/ADMIN -->
+                <div class="card table-card" id="superadminPanel" style="display:none; margin-top:28px; border:2px solid #92400e;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#451a03,#92400e); color:white;">
+                        <h3 style="color:white;">🔐 Panel Superadmin - Approval Akun</h3>
+                        <span class="nota-badge" id="pendingCount" style="background:#f59e0b; color:#451a03;">0 Pending</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <p style="font-size:12px; color:#78716c; margin-bottom:14px;">Daftar akun <b>Kasir / Admin</b> yang mendaftar via <code>register.html</code> dan menunggu persetujuan. Hanya <b>superadmin</b> bisa Approve/Tolak. Akun pending <b>tidak bisa login</b> sampai di-approve.</p>
+                        <div id="pendingList" style="display:flex; flex-direction:column; gap:10px;">
+                            <p style="text-align:center; color:#78716c; font-size:13px; padding:20px;">Memuat data pending...</p>
+                        </div>
+                        <div style="margin-top:14px; display:flex; gap:10px;">
+                            <button onclick="loadPendingUsers()" style="background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; padding:8px 14px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">Refresh Pending</button>
+                            <button onclick="loadActiveUsers()" style="background:#dcfce7; border:1.5px solid #bbf7d0; color:#15803d; padding:8px 14px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">Refresh Aktif</button>
+                            <a href="register.html" target="_blank" style="background:#fef3c7; border:1.5px solid #fde68a; color:#92400e; padding:8px 14px; border-radius:10px; font-size:12px; font-weight:700; text-decoration:none;">Form Register</a>
+                        </div>
+
+                        <hr style="margin:20px 0; border:none; border-top:1.5px dashed #fde68a;">
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h4 style="font-size:13px; color:#451a03; font-weight:800; margin:0;">🟢 Akun Aktif — Online / Offline</h4>
+                            <span id="activeCount" style="background:#dcfce7; color:#15803d; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">0 Aktif</span>
+                        </div>
+                        <p style="font-size:11px; color:#78716c; margin-bottom:10px;">Status <b style="color:#16a34a;">● Online</b> = aktif &lt;5 menit (heartbeat 30 detik). <b style="color:#f59e0b;">● Idle</b> = 5-60 menit. <b style="color:#a8a29e;">● Offline</b> = &gt;60 menit / logout. Visible hanya untuk superadmin.</p>
+                        <div id="activeList" style="display:flex; flex-direction:column; gap:8px;">
+                            <p style="text-align:center; color:#78716c; font-size:12px; padding:16px;">Memuat akun aktif...</p>
+                        </div>
+                        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                            <button onclick="loadActiveUsers()" style="background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; padding:8px 14px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">Muat Ulang</button>
+                            <span id="heartbeatStatus" style="font-size:11px; color:#78716c;">Heartbeat: -</span>
+                            <span style="margin-left:auto; font-size:10px; color:#a8a29e;">Auto-refresh 30 detik</span>
+                        </div>
+                    </div>
+                </div>
+
                 <footer class="footer">
                     <p><strong>Angkringan Lor Dalan</strong> &bull; Sambi Gedong, Tawengan, Sambi, Boyolali &bull; Buka 17.00 - 02.00 WIB</p>
                     <p style="margin-top:6px; font-size:11px;">Matur Nuwun Sudah Mampir, Lur! - Harga Merakyat - Rasa Nikmat - Sambi Gedong, Tawengan, Sambi, Boyolali</p>
@@ -446,6 +506,196 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="static/js/script.js"></script>
+    <script>
+    // Update info user & heartbeat untuk online/offline
+    let heartbeatInterval = null;
+    window.addEventListener("DOMContentLoaded", ()=>{
+        const u = sessionStorage.getItem("ald_user") || localStorage.getItem("ald_user") || "Unknown";
+        const r = sessionStorage.getItem("ald_role") || localStorage.getItem("ald_role") || "";
+        const el = document.getElementById("loginUserInfo");
+        if(el) el.textContent = "Login: " + u + (r ? " ("+r+")" : "") + " • " + new Date().toLocaleTimeString('id-ID');
+        // Tampilkan panel superadmin jika superadmin, dan atur polling agar langsung muncul saat ada pendaftar baru
+        let pendingInterval = null;
+        if(r === "superadmin"){
+            const panel = document.getElementById("superadminPanel");
+            if(panel) panel.style.display = "block";
+            loadPendingUsers();
+            loadActiveUsers();
+            // Heartbeat 15 detik + polling pending & aktif tiap 5 detik agar langsung muncul saat ada kasir/admin register
+            sendHeartbeat();
+            heartbeatInterval = setInterval(()=>{ sendHeartbeat(); }, 15000);
+            pendingInterval = setInterval(()=>{ loadPendingUsers(); loadActiveUsers(); }, 5000);
+            // Polling pending lebih cepat (5 detik) agar superadmin langsung lihat pendaftar baru tanpa refresh
+            document.getElementById("heartbeatStatus").textContent = "Heartbeat: aktif (15s) - Pending auto-refresh 5s";
+            // Notifikasi jika ada pending baru (bandingkan count)
+            let lastPendingCount = 0;
+            const _origLoadPending = loadPendingUsers;
+            loadPendingUsers = async function(){
+                await _origLoadPending();
+                const cur = document.getElementById("pendingCount").textContent;
+                const n = parseInt(cur) || 0;
+                if(n > lastPendingCount && lastPendingCount !== 0){
+                    // Ada pendaftar baru, flash badge
+                    const badge = document.getElementById("pendingCount");
+                    badge.style.background = "#dc2626"; badge.style.color = "white";
+                    badge.textContent = n + " Pending • BARU!";
+                    setTimeout(()=>{ badge.style.background="#f59e0b"; badge.style.color="#451a03"; badge.textContent = n + " Pending"; }, 3000);
+                    // Optional: beep atau title flash
+                    const origTitle = document.title;
+                    document.title = "🔔 " + n + " Pendaftar Baru! - " + origTitle;
+                    setTimeout(()=>{ document.title = origTitle; }, 5000);
+                }
+                lastPendingCount = n;
+            };
+        } else if(r === "admin" || r === "kasir"){
+            // Kasir/Admin: heartbeat hanya saat di dashboard (index.html), jika tutup dashboard -> offline
+            sendHeartbeat();
+            heartbeatInterval = setInterval(sendHeartbeat, 15000);
+            console.log("Heartbeat kasir/" + r + " aktif tiap 15s - superadmin akan lihat online");
+        }
+        // Jika tab di-hide (pindah tab/minimize), pause heartbeat agar tidak dianggap online palsu
+        document.addEventListener("visibilitychange", ()=>{
+            if(document.hidden){
+                if(heartbeatInterval) clearInterval(heartbeatInterval);
+                document.getElementById("heartbeatStatus").textContent = "Heartbeat: pause (tab hidden)";
+            } else {
+                sendHeartbeat();
+                if(r === "superadmin"){
+                    heartbeatInterval = setInterval(()=>{ sendHeartbeat(); loadActiveUsers(); }, 15000);
+                } else if(r === "admin" || r === "kasir"){
+                    heartbeatInterval = setInterval(sendHeartbeat, 15000);
+                }
+                document.getElementById("heartbeatStatus").textContent = "Heartbeat: aktif (15s)";
+            }
+        });
+        // Saat tutup tab / refresh / logout, kirim offline beacon agar langsung offline di panel superadmin
+        window.addEventListener("beforeunload", ()=>{
+            const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+            if(token && token!=="local-fallback-token"){
+                const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+                // sendBeacon lebih reliable saat unload
+                try{
+                    const blob = new Blob([], {type: "application/json"});
+                    navigator.sendBeacon(API_BASE + "/auth/logout", blob);
+                    // Fallback fetch keepalive
+                    fetch(API_BASE + "/auth/logout", {method:"POST", headers:{"Authorization":"Bearer "+token}, keepalive:true});
+                }catch(e){}
+            }
+        });
+    });
+    async function sendHeartbeat(){
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token || token==="local-fallback-token") return;
+        // Hanya kirim jika tab visible (benar-benar di dashboard)
+        if(document.hidden) return;
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        try{
+            const res = await fetch(API_BASE + "/auth/heartbeat", {method:"POST", headers:{"Authorization":"Bearer "+token}});
+            if(res.ok){
+                const el = document.getElementById("heartbeatStatus");
+                if(el) el.textContent = "Heartbeat: ok " + new Date().toLocaleTimeString('id-ID') + " (online)";
+            }
+        }catch(e){}
+    }
+    function handleLogout(){
+        if(!confirm("Keluar dari dashboard? Anda akan dialihkan ke halaman logout dan harus login lagi.")) return;
+        // Arahkan ke flow logout.html yang akan handle API logout + clear + redirect ke login.html
+        location.href = "logout.html";
+    }
+    // Superadmin approval functions
+    async function loadPendingUsers(){
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token) return;
+        try{
+            const res = await fetch(API_BASE + "/auth/pending", {headers:{"Authorization":"Bearer "+token}});
+            const listEl = document.getElementById("pendingList");
+            if(!listEl) return;
+            if(!res.ok){
+                listEl.innerHTML = "<p style='color:#dc2626; font-size:12px;'>Gagal load pending (bukan superadmin?)</p>";
+                return;
+            }
+            const data = await res.json();
+            if(data.length===0){
+                listEl.innerHTML = "<p style='color:#16a34a; font-size:12px; text-align:center; padding:12px;'>Tidak ada pendaftar pending. Semua sudah di-approve.</p>";
+                document.getElementById("pendingCount").textContent = "0 Pending";
+                return;
+            }
+            document.getElementById("pendingCount").textContent = data.length + " Pending";
+            listEl.innerHTML = data.map(u=>`
+                <div style="display:flex; align-items:center; justify-content:space-between; background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; padding:12px; gap:10px;">
+                    <div style="flex:1;">
+                        <strong style="color:#451a03; font-size:13px;">${u.username}</strong> <span style="background:#92400e; color:white; padding:2px 6px; border-radius:8px; font-size:10px;">${u.role}</span><br>
+                        <small style="color:#78716c;">${u.full_name || "-"} • ${u.email || "-"} • ${new Date(u.created_at).toLocaleDateString('id-ID')}</small>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="approveUser(${u.id})" style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">Approve</button>
+                        <button onclick="rejectUser(${u.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">Tolak</button>
+                    </div>
+                </div>
+            `).join("");
+        }catch(e){
+            console.error(e);
+        }
+    }
+    async function approveUser(id){
+        if(!confirm("Setujui akun ini?")) return;
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        const res = await fetch(API_BASE + "/auth/approve/" + id, {method:"POST", headers:{"Authorization":"Bearer "+token}});
+        if(res.ok){ alert("Berhasil approve!"); loadPendingUsers(); loadActiveUsers(); } else { const j=await res.json(); alert("Gagal: "+(j.detail||"error")); }
+    }
+    async function rejectUser(id){
+        if(!confirm("Tolak & hapus akun ini?")) return;
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        const res = await fetch(API_BASE + "/auth/reject/" + id, {method:"POST", headers:{"Authorization":"Bearer "+token}});
+        if(res.ok){ alert("DitolaK!"); loadPendingUsers(); loadActiveUsers(); } else { const j=await res.json(); alert("Gagal: "+(j.detail||"error")); }
+    }
+    async function loadActiveUsers(){
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token) return;
+        const listEl = document.getElementById("activeList");
+        if(!listEl) return;
+        try{
+            const res = await fetch(API_BASE + "/auth/active", {headers:{"Authorization":"Bearer "+token}});
+            if(!res.ok){
+                listEl.innerHTML = "<p style='color:#dc2626; font-size:12px;'>Gagal load aktif (butuh superadmin)</p>";
+                return;
+            }
+            const data = await res.json();
+            if(data.length===0){
+                listEl.innerHTML = "<p style='color:#78716c; font-size:12px; text-align:center; padding:12px;'>Belum ada akun aktif.</p>";
+                document.getElementById("activeCount").textContent = "0 Aktif";
+                return;
+            }
+            const onlineCount = data.filter(u=>u.is_online).length;
+            document.getElementById("activeCount").textContent = onlineCount + " Online / " + data.length + " Aktif";
+            listEl.innerHTML = data.map(u=>{
+                let dot = u.is_online ? "#16a34a" : (u.online_status==="idle" ? "#f59e0b" : "#a8a29e");
+                let statusText = u.is_online ? "Online" : (u.online_status==="idle" ? "Idle" : "Offline");
+                let badgeRole = u.role==="superadmin" ? "#451a03" : (u.role==="admin" ? "#92400e" : "#15803d");
+                return `
+                <div style="display:flex; align-items:center; justify-content:space-between; background:white; border:1.5px solid #fde68a; border-radius:12px; padding:10px 12px; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                        <span style="width:10px; height:10px; border-radius:50%; background:${dot}; display:inline-block; box-shadow:0 0 6px ${dot}; flex-shrink:0;"></span>
+                        <div style="flex:1;">
+                            <strong style="color:#451a03; font-size:13px;">${u.username}</strong> <span style="background:${badgeRole}; color:white; padding:2px 6px; border-radius:8px; font-size:10px; font-weight:700;">${u.role}</span> <span style="font-size:10px; color:${dot}; font-weight:700;">● ${statusText}</span><br>
+                            <small style="color:#78716c; font-size:11px;">${u.full_name||"-"} • ${u.email||"-"} • ${u.last_seen_text}</small>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <small style="color:#78716c; font-size:10px;">${u.last_active ? new Date(u.last_active).toLocaleString('id-ID') : "never"}</small>
+                    </div>
+                </div>`;
+            }).join("");
+        }catch(e){
+            console.error(e);
+            listEl.innerHTML = "<p style='color:#dc2626; font-size:12px;'>Error load aktif</p>";
+        }
+    }
+    </script>
 </body>
 </html>

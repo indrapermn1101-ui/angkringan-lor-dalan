@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient></defs>
+<rect width="200" height="200" rx="24" fill="url(#bg)" stroke="#fde68a" stroke-width="3"/>
+<ellipse cx="100" cy="158" rx="62" ry="12" fill="#fde68a" opacity="0.6"/>
+<g transform="translate(100,108)">
+  <ellipse cx="0" cy="36" rx="40" ry="10" fill="#92400e" opacity="0.12"/>
+  <path d="M -28 -30 L -22 30 L 22 30 L 28 -30 Z" fill="white" fill-opacity="0.6" stroke="#fde68a" stroke-width="2"/>
+  <path d="M 28 -18 C 44 -18, 44 6, 28 6" fill="none" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M -24 -14 L -20 26 L 20 26 L 24 -14 Z" fill="#d97706" opacity="0.85"/><path d="M -24 -14 L 24 -14 L 22 -8 L -22 -8 Z" fill="#f59e0b"/>
+  <ellipse cx="-8" cy="2" rx="10" ry="7" fill="#fef3c7" stroke="#a16207" stroke-width="1.2" transform="rotate(-20 -8 2)"/>
+  <ellipse cx="12" cy="8" rx="9" ry="6" fill="#fffbeb" stroke="#a16207" stroke-width="1.2" transform="rotate(15 12 8)"/>
+  <path d="M -18 12 C -10 16, -2 12, 6 16 C 12 18, 18 14, 20 10" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.6" fill="none"/>
+  <g stroke="#a8a29e" stroke-width="1.2" opacity="0.35" fill="none" stroke-linecap="round"><path d="M -10 -34 C -12 -40, -8 -44, -10 -50"/><path d="M 6 -36 C 4 -42, 8 -46, 6 -52"/></g>
+  <rect x="16" y="-28" width="4" height="22" rx="2" fill="#78350f" opacity="0.8" transform="rotate(12 18 -17)"/>
+</g>
+<text x="100" y="183" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="800" fill="#451a03">WEDANG JAHE SUSU</text>
+</svg>

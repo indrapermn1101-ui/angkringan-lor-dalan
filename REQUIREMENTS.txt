@@ -1,0 +1,471 @@
+================================================================================
+  DOKUMENTASI REQUIREMENTS (REQRUITMEN) - REPOSITORY PRAKTEK
+  Sistem Pemesanan Angkringan Lor Dalan - Warung Makan Tradisional
+================================================================================
+Repository      : F:\GILANG\PRAKTEK\PRAKTEK
+Tanggal Dokumen : 02 September 2026
+Versi Sistem    : 1.2 (Foto Asli JPG + SVG Fallback)
+Author          : Gilang - Angkringan Lor Dalan
+Alamat Warung   : Sambi Gedong, Tawengan, Sambi, Boyolali
+Buka            : 17.00 - 02.00 WIB
+Kontak          : 0812-3456-7890
+File Utama      : index.html, script.js, style.css, images/*.jpg, images/*.svg
+Dokumen Ini     : F:\GILANG\PRAKTEK\PRAKTEK\REQUIREMENTS.txt
+                (alias: REQRUITMEN.txt - sesuai permintaan user)
+================================================================================
+
+
+1. DESKRIPSI SISTEM
+--------------------------------------------------------------------------------
+Sistem adalah aplikasi web kasir & pemesanan untuk Angkringan Lor Dalan.
+Berbasis Frontend-only (HTML/CSS/JavaScript vanilla) tanpa backend/database
+server. Data disimpan di browser via LocalStorage (script.js:23).
+
+Tujuan: Mempermudah pelanggan/kasir mencatat pesanan Nasi Kucing, Sate,
+Gorengan, Kopi Joss, dll, menghitung total, mengelola status pesanan,
+dan rekap pembayaran/omzet secara offline.
+
+Alur utama: Pilih Menu (+/-) -> Keranjang auto-sync ke Daftar Pesanan
+(draft isAuto) -> Isi Data Pelanggan -> Simpan Pesanan -> Daftar Pesanan
+-> Pembayaran -> Cetak Struk.
+
+Referensi file: index.html:14 (app layout), script.js:30 (DOMContentLoaded),
+style.css:1 (theme angkringan).
+
+
+2. STAKEHOLDER & AKTOR
+--------------------------------------------------------------------------------
+- Pelanggan      : Memilih menu, isi nama/meja, lihat total
+- Kasir / Admin  : Kelola pesanan, ubah status, tandai lunas, rekap omzet
+- Juru Masak     : Melihat Daftar Pesanan status Antri/Proses untuk dimasak
+- Pemilik        : Melihat statistik omzet, total pesanan (sidebar & stat-card)
+
+Tidak ada sistem login/role; semua aktor pakai satu halaman web yang sama.
+
+
+3. STRUKTUR REPOSITORY
+--------------------------------------------------------------------------------
+F:\GILANG\PRAKTEK\PRAKTEK\index.html          (451 baris) - Struktur UI 4 modul
+F:\GILANG\PRAKTEK\PRAKTEK\script.js           (668 baris) - Logic utama
+F:\GILANG\PRAKTEK\PRAKTEK\style.css           (601 baris) - Theme angkringan
+F:\GILANG\PRAKTEK\PRAKTEK\AGK.jpg              - Logo warung (favicon, brand)
+F:\GILANG\PRAKTEK\PRAKTEK\logo.jpg             - Logo alternatif
+F:\GILANG\PRAKTEK\PRAKTEK\images\*.jpg        (16 file, 2.8 MB) - Foto asli
+                                              nasi-kucing.jpg 174 KB, nasi-bakar.jpg 66 KB,
+                                              nasi-goreng.jpg 48 KB, sate-usus.jpg 122 KB,
+                                              sate-telur.jpg 148 KB, sate-ayam.jpg 269 KB,
+                                              sate-ati.jpg 154 KB, tahu-bacem.jpg 116 KB,
+                                              tempe-mendoan.jpg 340 KB, bakwan.jpg 154 KB,
+                                              sosis-bakar.jpg 108 KB, kopi-joss.jpg 527 KB,
+                                              wedang-jahe.jpg 125 KB, teh.jpg 116 KB,
+                                              es-jeruk.jpg 75 KB, indomie.jpg 154 KB
+F:\GILANG\PRAKTEK\PRAKTEK\images\*.svg        (16 file) - Ilustrasi vektor fallback
+F:\GILANG\PRAKTEK\PRAKTEK\images\preview.html - Gallery preview 16 foto
+F:\GILANG\PRAKTEK\PRAKTEK\images\README.md    - Dokumentasi gambar
+F:\GILANG\PRAKTEK\PRAKTEK\REQUIREMENTS.txt    - Dokumen ini
+
+
+4. FUNCTIONAL REQUIREMENTS (FR) - KEBUTUHAN FUNGSIONAL
+--------------------------------------------------------------------------------
+FR-01: Daftar Makanan
+  Deskripsi : Menampilkan 11 menu makanan (Nasi, Sate, Gorengan, Bakaran, Mie)
+              dalam grid 2 kolom (style.css:287).
+  Sumber Data: DAFTAR_MENU filter kategori !== 'Minuman' (script.js:104)
+  UI        : index.html:101 div#makanan > div#menuMakanan
+  Foto      : images/nasi-kucing.jpg etc. via script.js:4-14
+  Status    : DONE
+
+FR-02: Daftar Minuman
+  Deskripsi : Menampilkan 5 menu minuman (Kopi Joss, Wedang Jahe, Teh, Es Jeruk)
+  Sumber Data: DAFTAR_MENU filter kategori === 'Minuman' (script.js:105)
+  UI        : index.html:114 div#minuman > div#menuMinuman
+  Status    : DONE
+
+FR-03: Gambar Menu Realistis
+  Deskripsi : Setiap menu punya gambar JPG foto asli (600x600) + SVG fallback
+              jika JPG gagal load (script.js:111 onerror replace .jpg->.svg).
+  File      : images/nasi-kucing.jpg ... indomie.jpg (16), images/*.svg (16)
+  Kode      : script.js:4 (gambar field), style.css:294 .menu-thumb 56x56
+  Status    : DONE
+
+FR-04: Manajemen Keranjang (+/-)
+  Deskripsi : Klik + tambah qty, klik - kurangi qty, Hapus item. Qty ditampilkan
+              sebagai badge. Menu terpilih highlight .selected (style.css:307).
+  Fungsi    : tambahMenu(id) script.js:129, kurangMenu(id) script.js:136,
+              hapusMenuKeranjang(id) script.js:145
+  UI        : Menu grid + Keranjang (index.html:182 div#keranjang)
+  Status    : DONE
+
+FR-05: Keranjang & Kalkulasi Total Otomatis
+  Deskripsi : Menampilkan ringkasan keranjang: nama, harga x qty, subtotal,
+              total bayar (Rp), jumlah item. Update real-time.
+  Fungsi    : updateKeranjang() script.js:152, getKeranjangDetail() script.js:194
+              formatRupiah() script.js:70
+  UI        : index.html:182-189, .total-bar style.css:362
+  Status    : DONE
+
+FR-06: Form Data Pelanggan
+  Deskripsi : Input wajib: Nama Pelanggan, No.Meja/Pesanan. Opsional: WA,
+              Jumlah Orang, Tanggal, Jam, Catatan, Metode Bayar, Status.
+  Field     : index.html:139-226 (nama, meja 12 opsi, wa, jmlOrang, pembayaran,
+              status, tanggal, jamPesan, catatan)
+  Validasi  : simpanPesanan() cek nama & meja wajib (script.js:300)
+              keranjang minimal 1 item (script.js:306)
+  Auto-set  : tanggal = today, jam = now (script.js:31-37)
+  Status    : DONE
+
+FR-07: Metode Pembayaran
+  Deskripsi : 4 opsi: Tunai (Cash), QRIS, Transfer, Bayar Nanti (Bon)
+              Rekap per metode di Pembayaran (script.js:511).
+  UI        : index.html:192 select#pembayaran
+  Logic     : statMetode() script.js:511, renderPembayaran() script.js:484
+  Status    : DONE
+
+FR-08: Status Pesanan
+  Deskripsi : 4 status: Antri, Proses Masak, Siap Saji, Selesai/Lunas
+              Berpengaruh ke warna badge (style.css:575) & omzet Lunas/Belum.
+  UI        : index.html:202 select#status
+  Fungsi    : statusColor() script.js:416, statusClass() script.js:424
+              ubahStatus() script.js:566, tandaiLunas() script.js:549
+  Status    : DONE
+
+FR-09: Auto-Sync Keranjang ke Daftar Pesanan (Tanpa Simpan Manual)
+  Deskripsi : Setiap klik +/- atau perubahan form pelanggan, keranjang otomatis
+              masuk ke Daftar Pesanan sebagai draft isAuto=true (BARU badge).
+              Jika keranjang dikosongkan, draft dihapus.
+  Fungsi    : syncKeranjangLangsung() script.js:210
+              Trigger: DOMContentLoaded listener change/input (script.js:48-56)
+              tambahMenu/kurangMenu -> sync (script.js:133,142)
+  Highlight : Baris draft kuning + outline oranye 800ms (script.js:277)
+  Status    : DONE
+
+FR-10: Simpan Pesanan Final
+  Deskripsi : Tombol Simpan Pesanan memfinalisasi draft isAuto -> hapus flag
+              isAuto, generate nota baru, reset keranjang, tampilkan struk.
+              Jika tidak ada draft, buat pesanan baru.
+  Fungsi    : simpanPesanan() script.js:287, generateNota() script.js:74 ANG-0001
+  Validasi  : Cek nama/meja & keranjang (script.js:300-308)
+  Status    : DONE
+
+FR-11: Generate Nomor Nota Otomatis
+  Deskripsi : Format ANG-0001, increment berdasarkan dataPesanan.length+1.
+              Update di updateNota() (script.js:79) & badge #noNota.
+  UI        : index.html:133 span#noNota
+  Status    : DONE
+
+FR-12: Daftar Pesanan & Pencarian (Tabel 3. Daftar Pesanan)
+  Deskripsi : Tabel 7 kolom: No Nota, Waktu, Pelanggan, Pesanan, Total, Status,
+              Aksi. Menampilkan ringkasan items, thumbnail 28x28 (max 4 + +N),
+              filter pencarian live (nama/meja/nota/menu).
+  Fungsi    : renderTable(filter) script.js:433, filterData() script.js:626
+  UI        : index.html:331 div#daftar, table#tabelPesanan, input#cari
+  Aksi      : Lihat Nota (lihatNota script.js:561), Ubah Status, Hapus
+  Status    : DONE
+
+FR-13: Modul Pembayaran & Rekap Omzet (Tabel 4. Pembayaran)
+  Deskripsi : Menampilkan 4 ringkasan: Total Omzet, Sudah Lunas, Belum Lunas,
+              Status Lunas/Belum. Rincian 4 metode (Tunai/QRIS/Transfer/Bon)
+              dengan nominal & count. Tabel transaksi dengan tombol Bayar->Lunas.
+  Fungsi    : renderPembayaran() script.js:484
+  UI        : index.html:360 div#pembayaran, tbody#tbodyPembayaran, bayarOmzet etc.
+  Status    : DONE
+
+FR-14: Manajemen Data Pesanan (CRUD & Aksi)
+  Deskripsi : Lihat Struk (tampilNota), Ubah Status via prompt, Hapus Data
+              per baris, Hapus Semua, Tandai Lunas. Semua update LocalStorage
+              & re-render tabel, pembayaran, statistik, nota.
+  Fungsi    : lihatNota() script.js:561, ubahStatus() script.js:566,
+              hapusData() script.js:593, hapusSemua() script.js:611,
+              tandaiLunas() script.js:549
+  Storage   : localStorage key "angkringan_lor_dalan" (script.js:23)
+  Status    : DONE
+
+FR-15: Struk / Nota & Cetak
+  Deskripsi : Menampilkan nota detail: pelanggan, waktu, rincian pesanan dengan
+              gambar 38x38, total bayar, catatan, tombol Cetak Struk & Tutup.
+              Cetak via window.print() (script.js:397) dengan CSS @media print
+              (style.css:593) sembunyikan sidebar/form.
+  Fungsi    : tampilNota(d, isNew) script.js:371
+  UI        : index.html:234 div#hasil.hidden
+  Status    : DONE
+
+FR-16: Statistik & Dashboard
+  Deskripsi : Menampilkan Total Pesanan, Antri/Proses, Omzet Hari Ini di 3 lokasi:
+              - Sidebar (sideTotal, sideOmzet) index.html:50
+              - Side stat-card (totalData, totalAntri, totalOmzet) index.html:302
+              - Pembayaran (bayarOmzet etc.)
+  Fungsi    : updateStat() script.js:631
+  Status    : DONE
+
+FR-17: Jam Live & Info Warung
+  Deskripsi : Menampilkan jam WIB live update per menit (script.js:59),
+              alamat, jam buka 17.00-02.00, telepon.
+  UI        : index.html:78 #jamLive, .topbar, .hero-banner index.html:68
+              .sidebar-brand index.html:17
+  Status    : DONE
+
+FR-18: Navigasi & UX
+  Deskripsi : Sidebar nav 4 menu utama (script.js:84 setActive), smooth scroll
+              ke #makanan, #minuman, #daftar, #pembayaran. Tombol Bantuan alert.
+  UI        : index.html:28 nav.sidebar-nav
+  Status    : DONE
+
+FR-19: Penyimpanan Lokal (Offline)
+  Deskripsi : Semua pesanan disimpan di browser LocalStorage tanpa backend.
+              Key: "angkringan_lor_dalan" (prioritas), fallback "service_hp_data".
+              Migrasi otomatis jika data lama punya field merek (script.js:25).
+  Kode      : script.js:23-28, setiap perubahan -> setItem (script.js:270,356)
+  Status    : DONE
+
+FR-20: Informasi Tambahan (Favorit, Promo, Alur, Filosofi)
+  Deskripsi : Menampilkan Menu Favorit 5 item dengan foto & rating,
+              Alur Pesan 5 langkah, Alert promo & info kebersihan,
+              Filosofi warung (index.html:323).
+  UI        : index.html:238 side column
+  Status    : DONE
+
+
+5. NON-FUNCTIONAL REQUIREMENTS (NFR)
+--------------------------------------------------------------------------------
+NFR-01 Performance:
+  - Vanilla JS tanpa framework/library berat (hanya Google Fonts)
+  - Load time <2 detik di koneksi 3G, bundle <500 KB (HTML+CSS+JS+gambar lazy)
+  - Render menu via innerHTML map join (script.js:125) efisien
+  - Gambar lazy loading (loading="lazy" script.js:111)
+
+NFR-02 Compatibility / Portability:
+  - Browser modern: Chrome 90+, Firefox 88+, Edge 90+, Safari 14+
+  - Tidak butuh instalasi, cukup buka index.html via Live Server atau file://
+  - Tidak butuh Node.js, npm, database, atau server-side language
+  - LocalStorage didukung 95%+ browser (fallback ke array kosong)
+
+NFR-03 Responsiveness:
+  - Layout flex sidebar 280px + main (style.css:34 .app)
+  - Grid: .layout 1fr 380px, .menu-grid 2 kolom (style.css:287-292)
+  - Breakpoint: 1100px sidebar jadi top, 900px layout 1 kolom, 640px grid-2 1 kolom
+  - Min-width 1024px desktop-first, overflow-x auto (style.css:23)
+
+NFR-04 Reliability / Offline:
+  - Berjalan fully offline setelah load awal (kecuali Google Fonts)
+  - Data tidak hilang saat refresh (LocalStorage persist)
+  - Backup otomatis service_hp_data -> angkringan_lor_dalan (script.js:25)
+
+NFR-05 Maintainability:
+  - Kode modular: fungsi kecil terpisah (formatRupiah, generateNota, renderTable dll)
+  - DAFTAR_MENU terpusat (script.js:3) mudah tambah/edit menu (tambah objek baru)
+  - CSS variabel :root --primary, --accent dll (style.css:4)
+  - Tidak ada minifikasi, mudah dibaca & di-edit
+
+NFR-06 Usability:
+  - Bahasa Indonesia, istilah familiar (Lur, Matur Nuwun, Monggo)
+  - Warna tema hangat angkringan: #451a03 coklat tua, #92400e, #f59e0b, #fffbeb krem
+  - Font: Plus Jakarta Sans (body) + Playfair Display (heading)
+  - Feedback: highlight draft kuning 800ms, alert validasi, confirm dialog hapus
+
+NFR-07 Security:
+  - Tidak ada data sensitif (hanya nama, meja, WA, pesanan)
+  - Tidak ada autentikasi, tidak ada XSS risk tinggi (innerHTML pakai data internal)
+  - Hati-hati: localStorage bisa dibersihkan user -> data hilang (disclaimer)
+
+NFR-08 Scalability:
+  - Tambah menu: cukup tambah objek di DAFTAR_MENU (script.js:3) + foto di images/
+  - Kinerja tetap baik hingga 500+ pesanan (renderTable loop O(n))
+  - Untuk >1000 pesanan, butuh pagination (belum ada, future improvement)
+
+
+6. DATA REQUIREMENTS & MODEL
+--------------------------------------------------------------------------------
+6.1 Menu (DAFTAR_MENU) - 16 record (script.js:3-19)
+  Field: id (string unique, e.g., 'naskuc'), nama, harga (number), kategori
+  (Nasi/Sate/Gorengan/Bakaran/Minuman/Mie), gambar (path 'images/*.jpg'),
+  deskripsi (string). Total 11 Makanan + 5 Minuman.
+
+6.2 Keranjang (keranjang) - Object in-memory (script.js:22)
+  Struktur: { [id]: qty } e.g., { "naskuc":2, "kopi_joss":1 }
+  Tidak disimpan permanen, hilang saat reset.
+
+6.3 Pesanan (dataPesanan) - Array of Object (script.js:23)
+  Field per pesanan:
+    nota (string ANG-0001), nama, meja, wa, jmlOrang, items (array),
+    total (number), totalFormatted (string Rp), pembayaran, status,
+    tanggal (YYYY-MM-DD), jam (HH:MM), catatan, isAuto (boolean draft),
+    waktuSimpan (ISO string)
+  Field items[]: id, nama, harga, qty, subtotal, kategori, gambar
+
+6.4 Statistik (derived)
+  - totalData = dataPesanan.length
+  - totalAntri = filter status Antri/Proses Masak
+  - totalOmzet = sum total where status !== Batal
+
+6.5 Storage
+  Key: "angkringan_lor_dalan" (localStorage)
+  Fallback key lama: "service_hp_data" (script.js:23)
+  Backup key: "backup_service_hp" jika migrasi (script.js:26)
+
+
+7. UI/UX REQUIREMENTS
+--------------------------------------------------------------------------------
+- Layout: App flex row (sidebar 280px sticky + main flex:1) (style.css:34,36)
+- Topbar: Gradient #451a03 -> #b45309, hero-banner kuning #f59e0b (style.css:133,170)
+- Sidebar: Brand logo AGK.jpg bulat 52px, nav 4 item + Bantuan, 2 stat, copy
+- Wrapper: max-width 1360px, padding 28px 32px (style.css:187)
+- Card: border 1.5px #fde68a, radius 16px, shadow (style.css:211), header gradient
+- Menu Item: flex row, img 56x56 rounded 10px, info flex1, action +/- (style.css:294)
+- Keranjang: border #fde68a, bg #fffbeb, item white card, total-bar gradient coklat
+- Form: grid-2 1fr 1fr, input/select padding 12px, focus border #d97706
+- Table: min-width 950px, thead #fffbeb, tbody hover #fffbeb, badge-status 4 warna
+- Nota: dashed border #92400e, grid 1fr 1fr, items white card, total 2px #92400e
+- Info-card, fav-item, steps, alert, stat-card (style.css:458-538)
+- Print: @media print sembunyikan sidebar/hero/form/keranjang (style.css:593)
+
+Font: https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800
+
+
+8. TECHNICAL REQUIREMENTS
+--------------------------------------------------------------------------------
+8.1 Software Minimal:
+  - OS: Windows 10/11, macOS 12+, Linux Ubuntu 20+, Android 8+, iOS 13+
+  - Browser: Chrome/Edge 90+, Firefox 88+, Safari 14+ (ES6, LocalStorage, CSS Grid)
+  - Editor (dev): VS Code / Notepad++ (opsional)
+  - Server (opsional): Live Server VS Code extension atau `python -m http.server` atau
+    langsung double-click index.html (file://) tetap jalan (kecuali CORS foto)
+
+8.2 Hardware Minimal:
+  - RAM: 2 GB
+  - CPU: Dual-core 1.5 GHz
+  - Storage: 50 MB (kode 1 MB + gambar 2.8 MB JPG + 32 KB SVG)
+  - Resolusi: 1024x768 minimal (style.css:23 html min-width 1024px, scroll jika kecil)
+  - Tidak butuh GPU khusus
+
+8.3 Stack:
+  - Frontend: HTML5, CSS3 (Grid, Flex, Variables, Media Query), JavaScript ES6 Vanilla
+  - Penyimpanan: Browser LocalStorage (5-10 MB quota, cukup untuk 2000+ pesanan)
+  - Dependencies Eksternal: Hanya Google Fonts (CDN), tidak ada npm, jQuery, Bootstrap
+  - Build Tool: Tidak ada (no bundler, no compile)
+  - Hosting (opsional): GitHub Pages, Netlify, Vercel, atau hosting statis biasa
+
+8.4 Instalasi & Menjalankan:
+  1. Clone/copy folder F:\GILANG\PRAKTEK\PRAKTEK\
+  2. Pastikan file ada: index.html, script.js, style.css, AGK.jpg, images/
+  3. Buka index.html:
+     - Cara A: Double-click index.html (file://)
+     - Cara B: VS Code -> Go Live (http://127.0.0.1:5500)
+     - Cara C: `npx serve` atau `python -m http.server 8000` di folder PRAKTEK
+  4. Tidak perlu `npm install` atau database setup
+  5. Untuk update menu: edit script.js:3 DAFTAR_MENU, tambah foto ke images/
+
+
+9. BUSINESS RULES
+--------------------------------------------------------------------------------
+- Harga: integer Rupiah tanpa desimal, format Rp via formatRupiah() (script.js:70)
+- Nota: ANG- + 4 digit zero-pad, increment (script.js:74), tidak ada cek duplikat
+  jika data dihapus manual nomor bisa reuse (limitasi).
+- Draft Auto: isAuto=true hanya 1 draft aktif (findIndex) (script.js:212), selalu
+  di index 0 (unshift). Finalisasi hapus isAuto (script.js:327).
+- Validasi Simpan: nama & meja wajib, keranjang minimal 1 item, else alert.
+- Status: Antri/Proses dianggap Belum Lunas untuk omzet, Selesai/Lunas dianggap Lunas.
+- Pembayaran: Tunai/QRIS/Transfer/Bon, rekap di renderPembayaran() (script.js:511).
+- Pencarian: case-insensitive di nama/meja/nota/items.nama (script.js:439).
+- Hapus Draft: jika hapus baris isAuto, keranjang dikosongkan (script.js:600).
+- Reset Form: kembalikan tanggal/jam now, hapus draft jika ada (script.js:649).
+- Jam Live: update tiap 60 detik, format id-ID HH:MM WIB (script.js:62).
+- Promo: Beli 5 Nasi Kucing Gratis 1 Gorengan 17.00-19.00 (teks statis index.html:284).
+
+
+10. EXTERNAL DEPENDENCIES
+--------------------------------------------------------------------------------
+- Google Fonts API: https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans...
+  Fallback: system font 'Segoe UI', Arial, sans-serif jika offline (style.css:26).
+- Gambar: 16 JPG foto asli (Wikimedia CC0, Pexels free) + 16 SVG ilustrasi custom
+  (dibuat manual, 200x200, theme #fffbeb). Fallback chain: JPG -> SVG -> AGK.jpg.
+- Tidak ada CDN JS, tidak ada API backend, tidak ada analytics.
+
+
+11. CONSTRAINTS & LIMITATIONS (BATASAN)
+--------------------------------------------------------------------------------
+- Maksimal LocalStorage browser ~5 MB (~2000 pesanan dengan gambar path saja,
+  bukan base64). Jika penuh, setItem bisa throw QuotaExceededError (belum ditangani).
+- Tidak ada sinkronisasi antar device/browser (data lokal per browser).
+- Tidak ada autentikasi & otorisasi; siapapun bisa hapus semua (hapusSemua).
+- Tidak ada backup cloud otomatis; user harus export manual (copy localStorage).
+- Tidak ada pagination tabel; jika >100 data, tabel scroll horizontal.
+- Nomor nota bisa duplikat jika manual edit localStorage atau hapus tengah.
+- Tidak ada validasi WA format, hanya text.
+- Print nota hanya via browser print dialog, tidak ada thermal printer ESC/POS.
+- Tidak ada mode gelap, tidak ada PWA installable (future).
+
+
+12. FUTURE REQUIREMENTS (REKOMENDASI PENGEMBANGAN)
+--------------------------------------------------------------------------------
+- Backend: Node.js/Express atau Firebase untuk multi-device sync & auth
+- Database: MongoDB/PostgreSQL untuk pesanan, bukan LocalStorage
+- Pagination & sorting tabel Daftar Pesanan
+- Export ke Excel/PDF untuk laporan omzet
+- PWA + Service Worker untuk offline penuh & install di HP
+- Thermal printer support (ESC/POS) untuk struk
+- Role: Admin, Kasir, Dapur (login)
+- Upload foto menu via form, bukan edit kode
+- Notifikasi suara saat pesanan baru (audio)
+- Mode gelap & multi-bahasa (ID/EN/Jawa)
+
+
+13. ACCEPTANCE CRITERIA (KRITERIA PENERIMAAN)
+--------------------------------------------------------------------------------
+- Buka index.html -> 11 Makanan + 5 Minuman tampil dengan foto JPG.
+- Klik + pada Nasi Kucing -> keranjang 1 item Rp 5.000, total update, Daftar
+  Pesanan muncul draft BARU kuning, Daftar Pembayaran ter-update.
+- Isi Nama "Gilang", Meja "Meja 01" -> draft otomatis update nama/meja tanpa klik.
+- Klik Simpan Pesanan -> draft hilang BARU, jadi baris biasa, nota tampil,
+  bisa Cetak.
+- Cari "Gilang" di input cari -> hanya pesanan Gilang tampil.
+- Ubah Status jadi "Selesai / Lunas" -> badge coklat, omzet Lunas bertambah,
+  tombol Bayar hilang.
+- Refresh browser -> data tetap ada (LocalStorage).
+- Hapus Satu -> baris hilang, hapus semua -> tabel kosong, localStorage clear.
+- Test di Chrome, Firefox, HP Android (responsif 360px) tetap usable (scroll).
+
+
+14. GLOSSARY
+--------------------------------------------------------------------------------
+- Angkringan : Warung makan tradisional lesehan gerobak, khas Jogja/Solo
+- Nasi Kucing : Nasi porsi kecil (porsi kucing) dibungkus daun pisang/kertas
+- Sate-Satean : Tusuk sate kecil: Usus, Telur Puyuh, Ayam, Ati Ampela
+- Gorengan   : Tahu Bacem, Tempe Mendoan, Bakwan, Sosis Bakar
+- Kopi Joss  : Kopi hitam + arang membara dicemplung (khas Jogja)
+- Wedang Jahe: Minuman jahe susu hangat
+- isAuto     : Flag draft pesanan yang auto-sync dari keranjang (belum final)
+- Nota       : Nomor unik ANG-0001 untuk pesanan
+- Omzet      : Total pendapatan (sum total semua pesanan)
+
+
+15. REFERENSI KODE (TRACEABILITY)
+--------------------------------------------------------------------------------
+- DAFTAR_MENU             : script.js:3
+- LocalStorage Load/Save  : script.js:23, script.js:270, script.js:356
+- DOMContentLoaded Init   : script.js:30
+- renderMenuMakananMinuman: script.js:99
+- tambah/kurangMenu       : script.js:129, script.js:136
+- updateKeranjang         : script.js:152
+- getKeranjangDetail      : script.js:194
+- syncKeranjangLangsung   : script.js:210
+- simpanPesanan           : script.js:287
+- tampilNota              : script.js:371
+- renderTable/filterData  : script.js:433, script.js:626
+- renderPembayaran        : script.js:484
+- updateStat              : script.js:631
+- Layout HTML 4 modul     : index.html:101,114,131,331,360
+- Theme CSS               : style.css:4, style.css:34, style.css:287, style.css:294
+
+
+================================================================================
+DOKUMEN SELESAI - Matur Nuwun, Lur!
+Angkringan Lor Dalan - Hangat - Merakyat - Ngangeni
+================================================================================
+Cara pakai dokumen ini:
+- Untuk dosen/penguji: sebagai bukti analisis requirements repository PRAKTEK
+- Untuk developer: sebagai checklist sebelum modifikasi/tambah fitur
+- Untuk user: sebagai panduan memahami sistem
+
+Simpan TXT ini bersama repository. Jika ada perubahan kode, update dokumen
+versi berikutnya.
+================================================================================

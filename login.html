@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Angkringan Lor Dalan</title>
+    <link rel="icon" type="image/jpeg" href="static/assets/AGK.jpg">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg,#451a03 0%,#78350f 40%,#92400e 70%,#b45309 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .login-card { background:white; border-radius:20px; padding:32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.3); border:2px solid #fde68a; }
+        .login-card h1 { font-family:'Playfair Display',serif; color:#451a03; font-size:22px; font-weight:800; text-align:center; margin:0; }
+        .login-card .subtitle { font-size:11px; letter-spacing:2px; color:#92400e; font-weight:700; text-align:center; margin:4px 0 0 0; }
+        .form-group { display:flex; flex-direction:column; gap:6px; }
+        .form-group label { font-size:12px; font-weight:700; color:#78350f; }
+        .form-group input, .form-group select { width:100%; padding:12px 14px; border:1.5px solid #fde68a; border-radius:12px; font-size:14px; outline:none; background:#fffbeb; }
+        .form-group input:focus { border-color:#d97706; background:white; }
+        .btn-login { background:linear-gradient(135deg,#d97706,#92400e); color:white; border:none; padding:13px; border-radius:12px; font-size:14px; font-weight:800; cursor:pointer; width:100%; box-shadow:0 6px 16px rgba(146,64,14,0.25); }
+        .btn-login:hover { background:linear-gradient(135deg,#b45309,#78350f); }
+        .link-register { text-align:center; font-size:13px; margin-top:12px; }
+        .link-register a { color:#92400e; font-weight:700; text-decoration:none; }
+        .link-register a:hover { text-decoration:underline; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div style="text-align:center; margin-bottom:24px;">
+            <img src="static/assets/AGK.jpg" alt="Logo" style="width:72px; height:72px; border-radius:16px; object-fit:cover; border:3px solid #fde68a; background:white; margin:0 auto 12px auto; display:block;">
+            <h1>ANGKRINGAN LOR DALAN</h1>
+            <p class="subtitle">LOGIN DASHBOARD</p>
+            <p style="font-size:12px; color:#78716c; margin:8px 0 0 0;">Masuk sebagai superadmin, admin, atau kasir</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" style="display:flex; flex-direction:column; gap:14px;">
+            <div class="form-group">
+                <label for="loginUser">Username</label>
+                <input id="loginUser" type="text" placeholder="Username Anda" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPass">Password</label>
+                <div style="position:relative; display:flex; align-items:center;">
+                    <input id="loginPass" type="password" placeholder="••••••••" required style="flex:1; padding-right:42px;">
+                    <button type="button" onclick="togglePass('loginPass', this)" title="Tampil/Sembunyi password" style="position:absolute; right:8px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:12px; line-height:1;">👁</button>
+                </div>
+            </div>
+            <div id="loginError" style="display:none; background:#fee2e2; color:#dc2626; padding:10px 12px; border-radius:10px; font-size:13px; border:1px solid #fecaca;"></div>
+            <div id="loginSuccess" style="display:none; background:#dcfce7; color:#15803d; padding:10px 12px; border-radius:10px; font-size:13px; border:1px solid #bbf7d0;"></div>
+            <button type="submit" id="loginBtn" class="btn-login">Masuk Dashboard</button>
+            <p style="font-size:11px; color:#78716c; text-align:center; margin:0;">API: <span id="apiStatus" style="color:#92400e;">cek...</span> • Hubungi superadmin untuk kredensial</p>
+        </form>
+
+        <div class="link-register">
+            Belum punya akun? <a href="register.html">Daftar sebagai Kasir / Admin</a><br>
+            <small style="color:#78716c;">Akun baru harus disetujui superadmin</small>
+        </div>
+
+        <div style="margin-top:16px; background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; padding:12px; font-size:11px; color:#92400e; line-height:1.5;">
+            <strong>Info Login:</strong><br>
+            • Superadmin sudah tersedia — hubungi pemilik untuk kredensial<br>
+            • Kasir/Admin baru: daftar via Register → menunggu approval superadmin → baru bisa login<br>
+            • Setiap akses dashboard wajib login ulang (token sessionStorage)
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        // Jika sudah login, langsung ke dashboard
+        (async () => {
+            const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+            if(token && token !== "local-fallback-token"){
+                try{
+                    const r = await fetch(API_BASE + "/auth/me", {headers:{"Authorization":"Bearer "+token}});
+                    if(r.ok){
+                        const u = await r.json();
+                        // Sudah login, redirect ke dashboard
+                        // Tapi sesuai flow baru, tetap harus login tiap akses, jadi tidak auto-redirect
+                        // Komentar baris bawah jika ingin auto-redirect
+                        // location.href = "index.html";
+                    }
+                }catch(e){}
+            }
+            // Cek API
+            fetch(API_BASE + "/health").then(r=>r.json()).then(j=>{
+                document.getElementById("apiStatus").textContent = j.status==="ok" ? "online" : "offline";
+                document.getElementById("apiStatus").style.color = j.status==="ok" ? "#16a34a" : "#dc2626";
+            }).catch(()=>{ document.getElementById("apiStatus").textContent="offline"; document.getElementById("apiStatus").style.color="#d97706"; });
+        })();
+
+        function togglePass(id, btn){
+            const inp = document.getElementById(id);
+            if(!inp) return;
+            if(inp.type === "password"){ inp.type = "text"; btn.textContent = "🙈"; btn.title = "Sembunyikan password"; }
+            else { inp.type = "password"; btn.textContent = "👁"; btn.title = "Tampilkan password"; }
+        }
+
+        async function handleLogin(e){
+            e.preventDefault();
+            const user = document.getElementById("loginUser").value.trim();
+            const pass = document.getElementById("loginPass").value;
+            const btn = document.getElementById("loginBtn");
+            const err = document.getElementById("loginError");
+            const suc = document.getElementById("loginSuccess");
+            err.style.display="none"; suc.style.display="none";
+            btn.textContent="Memeriksa..."; btn.disabled=true;
+
+            try{
+                // Coba login via API JSON
+                let res = await fetch(API_BASE + "/auth/login-json", {
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body: JSON.stringify({username:user, password:pass})
+                });
+                const data = await res.json();
+                if(res.ok && data.access_token){
+                    sessionStorage.setItem("ald_token", data.access_token);
+                    localStorage.setItem("ald_token", data.access_token);
+                    sessionStorage.setItem("ald_user", user);
+                    sessionStorage.setItem("ald_role", data.role || "");
+                    // Fetch me untuk dapat role
+                    try{
+                        const me = await fetch(API_BASE + "/auth/me", {headers:{"Authorization":"Bearer "+data.access_token}});
+                        if(me.ok){ const u = await me.json(); sessionStorage.setItem("ald_role", u.role); sessionStorage.setItem("ald_user", u.username); }
+                    }catch(e){}
+                    suc.textContent="Login berhasil! Mengalihkan ke dashboard...";
+                    suc.style.display="block";
+                    setTimeout(()=>{ location.href="index.html"; }, 800);
+                    return;
+                }
+                // Jika 403 pending approval
+                if(res.status===403){
+                    err.textContent = data.detail || "Akun belum disetujui superadmin. Hubungi superadmin.";
+                    err.style.display="block";
+                } else {
+                    err.textContent = data.detail || "Username atau password salah";
+                    err.style.display="block";
+                }
+            }catch(apiErr){
+                // Fallback lokal jika API mati: cek superadmin hardcoded
+                if((user==="superadmin" || user==="admin") && pass==="Solojogja1"){
+                    sessionStorage.setItem("ald_token", "local-fallback-token");
+                    sessionStorage.setItem("ald_user", user + " (lokal)");
+                    sessionStorage.setItem("ald_role", "superadmin");
+                    localStorage.setItem("ald_token", "local-fallback-token");
+                    suc.textContent="Login lokal berhasil (API offline). Masuk dashboard...";
+                    suc.style.display="block";
+                    setTimeout(()=>{ location.href="index.html"; }, 800);
+                    return;
+                }
+                err.textContent = "Gagal konek API & bukan superadmin lokal. Cek backend di http://127.0.0.1:8000/docs";
+                err.style.display="block";
+            } finally {
+                btn.textContent="Masuk Dashboard"; btn.disabled=false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient></defs>
+<rect width="200" height="200" rx="24" fill="url(#bg)" stroke="#fde68a" stroke-width="3"/>
+<ellipse cx="100" cy="158" rx="62" ry="12" fill="#fde68a" opacity="0.6"/>
+<g transform="translate(100,100)">
+  <ellipse cx="0" cy="18" rx="60" ry="38" fill="#14532d" stroke="#052e16" stroke-width="2.5"/>
+  <ellipse cx="0" cy="15" rx="56" ry="34" fill="#16a34a"/>
+  <path d="M -40 5 C -30 -8, 30 -8, 40 5" stroke="#052e16" stroke-width="1.5" stroke-dasharray="4 3" fill="none" opacity="0.5"/>
+  <rect x="-38" y="-18" width="76" height="32" rx="6" fill="white" stroke="#d6d3d1" stroke-width="1.5"/>
+  <rect x="-34" y="-14" width="68" height="24" rx="4" fill="#fffbeb"/>
+  <g stroke="#f59e0b" stroke-width="1.2" opacity="0.8"><line x1="-30" y1="-6" x2="30" y2="-6"/><line x1="-30" y1="0" x2="30" y2="0"/><line x1="-30" y1="6" x2="30" y2="6"/></g>
+  <path d="M -18 38 C -14 28, -8 32, -4 24 C 0 32, 6 28, 10 38 Z" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
+  <path d="M -8 38 C -6 32, -2 34, 0 28 C 2 34, 6 32, 8 38 Z" fill="#fbbf24"/>
+</g>
+<text x="100" y="183" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="800" fill="#451a03">NASI BAKAR AYAM</text>
+</svg>

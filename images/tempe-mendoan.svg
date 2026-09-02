@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient></defs>
+<rect width="200" height="200" rx="24" fill="url(#bg)" stroke="#fde68a" stroke-width="3"/>
+<ellipse cx="100" cy="158" rx="62" ry="12" fill="#fde68a" opacity="0.6"/>
+<g transform="translate(100,110)">
+  <ellipse cx="0" cy="28" rx="62" ry="26" fill="white" stroke="#e7e5e4" stroke-width="2.5"/>
+  <ellipse cx="0" cy="24" rx="56" ry="20" fill="#fffbeb"/>
+  <g transform="rotate(-8)">
+    <rect x="-44" y="-18" width="88" height="36" rx="10" fill="#f59e0b" stroke="#d97706" stroke-width="1.8"/>
+    <rect x="-40" y="-14" width="80" height="28" rx="8" fill="#fbbf24"/>
+    <g fill="#78350f" opacity="0.9"><ellipse cx="-28" cy="-6" rx="5" ry="3"/><ellipse cx="-16" cy="2" rx="6" ry="3.5"/><ellipse cx="-4" cy="-4" rx="5" ry="3"/><ellipse cx="10" cy="4" rx="6" ry="3"/><ellipse cx="24" cy="-2" rx="5" ry="3"/></g>
+    <g fill="#16a34a" opacity="0.9"><ellipse cx="-22" cy="-10" rx="2" ry="1"/><ellipse cx="6" cy="-8" rx="2.2" ry="1.2"/></g>
+  </g>
+  <g transform="rotate(12) translate(14,8)">
+    <rect x="-40" y="-16" width="80" height="32" rx="9" fill="#d97706" stroke="#92400e" stroke-width="1.5" opacity="0.9"/>
+    <rect x="-36" y="-12" width="72" height="24" rx="7" fill="#f59e0b" opacity="0.9"/>
+    <g fill="#78350f" opacity="0.85"><ellipse cx="-20" cy="-4" rx="5" ry="3"/><ellipse cx="-2" cy="4" rx="6" ry="3"/><ellipse cx="16" cy="-2" rx="5" ry="3"/></g>
+  </g>
+</g>
+<text x="100" y="183" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="800" fill="#451a03">TEMPE MENDOAN</text>
+</svg>

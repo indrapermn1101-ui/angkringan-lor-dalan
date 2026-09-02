@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout - Angkringan Lor Dalan</title>
+    <link rel="icon" type="image/jpeg" href="static/assets/AGK.jpg">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg,#451a03 0%,#78350f 40%,#92400e 70%,#b45309 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .logout-card { background:white; border-radius:20px; padding:32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.3); border:2px solid #fde68a; text-align:center; }
+    </style>
+</head>
+<body>
+    <div class="logout-card">
+        <img src="static/assets/AGK.jpg" alt="Logo" style="width:64px; height:64px; border-radius:14px; object-fit:cover; border:3px solid #fde68a; margin:0 auto 16px auto; display:block;">
+        <h2 style="font-family:'Playfair Display',serif; color:#451a03; font-size:18px; font-weight:800; margin:0;">KELUAR DASHBOARD</h2>
+        <p id="logoutMsg" style="font-size:13px; color:#78716c; margin:12px 0 0 0;">Memproses logout...</p>
+        <div id="logoutSpinner" style="margin:20px auto; width:36px; height:36px; border:4px solid #fde68a; border-top:4px solid #92400e; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+        <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
+        <p style="font-size:11px; color:#a8a29e; margin:16px 0 0 0;">Anda akan diarahkan ke <b>login.html</b> dan harus login lagi sebagai <code>superadmin / admin / kasir</code> untuk akses dashboard.</p>
+    </div>
+
+    <script>
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        (async function doLogout(){
+            const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+            const user = sessionStorage.getItem("ald_user") || localStorage.getItem("ald_user") || "Unknown";
+            document.getElementById("logoutMsg").textContent = "Hai " + user + ", memproses logout...";
+
+            // Panggil backend logout untuk set offline (jika ada token valid)
+            if(token && token !== "local-fallback-token"){
+                try{
+                    await fetch(API_BASE + "/auth/logout", {
+                        method: "POST",
+                        headers: { "Authorization": "Bearer " + token }
+                    });
+                }catch(e){
+                    console.warn("Logout API gagal, tetap lanjut clear local", e);
+                }
+                // Juga coba sendBeacon untuk keandalan saat unload
+                try{ navigator.sendBeacon(API_BASE + "/auth/logout", new Blob([],{type:"application/json"})); }catch(e){}
+            }
+
+            // Bersihkan semua token & data session
+            sessionStorage.removeItem("ald_token");
+            sessionStorage.removeItem("ald_user");
+            sessionStorage.removeItem("ald_role");
+            localStorage.removeItem("ald_token");
+            localStorage.removeItem("ald_user");
+            localStorage.removeItem("ald_role");
+            // Bersihkan juga keranjang & draft lokal jika ada
+            // localStorage.removeItem("angkringan_lor_dalan");
+
+            document.getElementById("logoutMsg").innerHTML = "✅ Berhasil logout!<br><small style='color:#16a34a;'>Mengalihkan ke login dalam 2 detik...</small>";
+            document.getElementById("logoutSpinner").style.borderTopColor = "#16a34a";
+
+            setTimeout(()=>{
+                // Ganti history agar back button tidak kembali ke dashboard tanpa login
+                location.replace("login.html");
+            }, 1500);
+        })();
+    </script>
+</body>
+</html>

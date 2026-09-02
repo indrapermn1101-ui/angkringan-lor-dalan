@@ -1,0 +1,153 @@
+================================================================================
+  STRUKTUR PROJEK RAPI - ANGKRINGAN LOR DALAN
+  Kode + Aset Image Terorganisir
+================================================================================
+Tanggal Rapikan : 02 September 2026
+Versi           : 2.0 (Tidy + FastAPI + SQLite)
+Root            : F:\GILANG\PRAKTEK\PRAKTEK
+================================================================================
+
+STRUKTUR BARU (RAPI):
+--------------------------------------------------------------------------------
+PRAKTEK/
+│
+├── backend/                      # Backend FastAPI + SQLite
+│   ├── main.py                   # FastAPI app, CORS, StaticFiles, mount /static & /images
+│   ├── database.py               # SQLAlchemy engine sqlite:///./backend/angkringan.db
+│   ├── models.py                 # Menu, Pesanan, PesananItem (3 tabel)
+│   ├── schemas.py                # Pydantic schemas
+│   ├── seed.py                   # Seed 16 menu (gambar: static/images/*.jpg)
+│   ├── requirements.txt          # fastapi, uvicorn, sqlalchemy, pydantic
+│   ├── angkringan.db             # SQLite DB (auto-create, 52 KB)
+│   ├── __pycache__/
+│   └── routers/
+│       ├── menu.py               # GET /api/menu
+│       ├── pesanan.py            # CRUD /api/pesanan
+│       └── pembayaran.py         # GET /api/pembayaran, /api/stat
+│
+├── static/                       # Frontend Assets (BARU - RAPI)
+│   ├── css/
+│   │   └── style.css             # 19 KB, theme angkringan #92400e
+│   ├── js/
+│   │   └── script.js             # 37 KB, logic + FastAPI fetch (API_AVAILABLE)
+│   ├── images/                   # 16 JPG foto asli (2.8 MB) + 16 SVG (32 KB)
+│   │   ├── nasi-kucing.jpg       # 174 KB - Wikimedia Sega_Kucing.JPG
+│   │   ├── nasi-bakar.jpg        # 66 KB
+│   │   ├── nasi-goreng.jpg       # 48 KB
+│   │   ├── sate-usus.jpg         # 122 KB - Pexels 37265039
+│   │   ├── sate-telur.jpg        # 148 KB
+│   │   ├── sate-ayam.jpg         # 269 KB
+│   │   ├── sate-ati.jpg          # 154 KB
+│   │   ├── tahu-bacem.jpg        # 116 KB - Wikimedia Bacem_tahu.jpg
+│   │   ├── tempe-mendoan.jpg     # 340 KB
+│   │   ├── bakwan.jpg            # 154 KB - Wikimedia Bakwan.jpg
+│   │   ├── sosis-bakar.jpg       # 108 KB
+│   │   ├── kopi-joss.jpg         # 527 KB
+│   │   ├── wedang-jahe.jpg       # 125 KB
+│   │   ├── teh.jpg               # 116 KB
+│   │   ├── es-jeruk.jpg          # 75 KB
+│   │   ├── indomie.jpg           # 154 KB
+│   │   ├── *.svg                 # 16 ilustrasi fallback
+│   │   ├── preview.html          # Gallery preview
+│   │   └── README.md             # Dokumentasi gambar
+│   └── assets/
+│       ├── AGK.jpg               # 894 KB - Logo utama
+│       └── logo.jpg              # 894 KB - Logo alternatif
+│
+├── .vscode/
+│   └── tasks.json                # 8 Tasks VSCode untuk FastAPI (lihat bawah)
+│
+├── index.html                    # 26 KB, frontend utama (ref ke static/*)
+├── script.js                     # 37 KB - LEGACY copy (sync dengan static/js/script.js)
+├── style.css                     # 19 KB - LEGACY copy
+├── AGK.jpg                       # 894 KB - LEGACY copy (untuk backward compat)
+├── logo.jpg                      # 894 KB - LEGACY copy
+├── images/                       # LEGACY folder (copy dari static/images, untuk /images)
+│   └── ... (32 file, tetap ada untuk backward compat)
+│
+├── backend/README.md             # Dokumentasi backend
+├── README.md                     # Dokumentasi utama
+├── REQUIREMENTS.txt              # Requirements sistem
+├── REQRUITMEN.txt                # Alias typo
+├── REKRUTMEN.txt                 # HR recruitment
+├── STRUKTUR_PROJEK.txt           # Ini
+├── run.bat                       # Windows run script
+└── run.sh                        # Linux/Mac run script
+
+Catatan:
+- File LEGACY di root (script.js, style.css, AGK.jpg, images/) tetap ada untuk
+  backward compat jika ada yang akses via path lama (/style.css, /AGK.jpg, /images/...)
+  Backend main.py mount keduanya: /static -> static/, /images -> images/ atau static/images
+- File BARU di static/ adalah yang RAPI dan direkomendasikan untuk edit ke depan
+- Keduanya sync (copy) saat rapikan, jadi edit di salah satu harus sync ke lainnya
+  Rekomendasi: edit di static/* (baru), lalu copy ke root jika perlu
+
+PERUBAHAN PATH (SEBELUM -> SESUDAH):
+--------------------------------------------------------------------------------
+style.css              -> static/css/style.css         (index.html:9)
+script.js              -> static/js/script.js           (index.html:449)
+AGK.jpg                -> static/assets/AGK.jpg         (index.html:7,19,71,85)
+logo.jpg               -> static/assets/logo.jpg
+images/nasi-kucing.jpg -> static/images/nasi-kucing.jpg (script.js:4, seed.py:16)
+images/*.svg           -> static/images/*.svg
+backend seed gambar    -> static/images/*.jpg           (backend/seed.py:16)
+
+Semua path di index.html sudah di-update ke static/* (verified via grep static/)
+Semua path di static/js/script.js:4 dan backend/seed.py:16 sudah ke static/images/
+Jika JPG gagal, fallback ke static/images/*.svg lalu static/assets/AGK.jpg
+
+BACKEND STATIC MOUNT (backend/main.py:50):
+--------------------------------------------------------------------------------
+BASE_DIR = PRAKTEK/
+STATIC_DIR = BASE_DIR/static
+IMAGES_DIR (legacy) = BASE_DIR/images
+IMAGES_NEW = STATIC_DIR/images
+
+- app.mount("/static", StaticFiles(directory=STATIC_DIR))  -> /static/css/style.css 200 OK
+- app.mount("/images", StaticFiles(directory=IMAGES_DIR or IMAGES_NEW)) -> /images/nasi-kucing.jpg 200 OK (legacy)
+- GET / -> FileResponse index.html
+- GET /docs -> Swagger
+
+Verifikasi:
+  curl -I http://127.0.0.1:8000/static/css/style.css         -> 200 OK 19 KB
+  curl -I http://127.0.0.1:8000/static/images/nasi-kucing.jpg -> 200 OK 177 KB
+  curl -I http://127.0.0.1:8000/static/assets/AGK.jpg         -> 200 OK 914 KB
+  curl -I http://127.0.0.1:8000/images/nasi-kucing.jpg       -> 200 OK (legacy)
+  curl http://127.0.0.1:8000/api/menu/ -> 16 menu gambar static/images/...
+
+CARA EDIT KE DEPAN (REKOMENDASI):
+--------------------------------------------------------------------------------
+- Edit CSS  : static/css/style.css  (bukan root style.css)
+- Edit JS   : static/js/script.js   (lalu copy ke root script.js jika perlu: cp static/js/script.js script.js)
+- Edit HTML : index.html (sudah pakai static/*)
+- Tambah foto menu: taruh di static/images/nama-baru.jpg + update static/js/script.js DAFTAR_MENU + backend/seed.py
+- Logo: static/assets/AGK.jpg
+
+VSCODE TASKS (".vscode/tasks.json"):
+--------------------------------------------------------------------------------
+Lihat file .vscode/tasks.json untuk 8 tasks:
+
+1. FastAPI: Install Dependencies  (pip install -r backend/requirements.txt)
+2. FastAPI: Seed DB (16 Menu)    (python -m backend.seed)
+3. FastAPI: Run Server            (python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload) [DEFAULT]
+4. FastAPI: Run Server (No Reload)
+5. FastAPI: Open Swagger Docs     (start http://127.0.0.1:8000/docs)
+6. Frontend: Open Index           (start http://127.0.0.1:8000/)
+7. DB: Reset & Seed               (del backend/angkringan.db & python -m backend.seed)
+8. Full: Install + Seed + Run     (sequence 1+2+3)
+
+Cara pakai di VSCode:
+  Ctrl+Shift+P -> "Tasks: Run Task" -> pilih "FastAPI: Run Server"
+  atau menu Terminal -> Run Task...
+
+KEUNTUNGAN STRUKTUR RAPI:
+--------------------------------------------------------------------------------
+- Kode terpisah: backend/ (API), static/ (frontend assets), index.html (view)
+- Aset image terpusat di static/images/ (mudah backup, CDN, optimasi)
+- Sesuai standar FastAPI: static/ untuk StaticFiles, templates/ jika pakai Jinja2
+- Mudah deploy: cukup copy folder static/ + backend/ + index.html
+- Mudah maintenance: edit di satu tempat (static/), legacy tetap jalan
+
+================================================================================
+Matur Nuwun, Lur! - Struktur Rapi Selesai
+================================================================================
