@@ -16,3 +16,9 @@ backend/angkringan.db
 .vscode/settings.json
 .DS_Store
 Thumbs.db
+
+# Cloudflare Tunnel - secrets (jangan commit token)
+jalankan-tunnel-token.bat
+RUN-LANCAR.bat
+*.json
+!backend/requirements.json

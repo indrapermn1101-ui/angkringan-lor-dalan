@@ -19,9 +19,8 @@ const DAFTAR_MENU = [
     { id: 'indomie', nama: 'Indomie Goreng/Telor', harga: 13000, kategori: 'Mie', gambar: 'static/images/indomie.jpg', deskripsi: 'Indomie goreng + telur' },
 ];
 
-// === FASTAPI + SQLite INTEGRATION ===
-// Jika backend FastAPI jalan di port 8000, pakai /api, jika frontend di Live Server 5500 pakai http://127.0.0.1:8000/api
-const API_BASE = (location.port === "8000" || location.hostname === "127.0.0.1" && location.port === "8000") ? "/api" : "http://127.0.0.1:8000/api";
+// === FASTAPI + SQLite INTEGRATION + RBAC ===
+const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
 let API_AVAILABLE = false;
 async function apiFetch(path, opts = {}) {
     try {
@@ -29,11 +28,37 @@ async function apiFetch(path, opts = {}) {
         const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
         if (token && token !== "local-fallback-token") headers["Authorization"] = "Bearer " + token;
         const res = await fetch(API_BASE + path, { ...opts, headers });
-        if (!res.ok) throw new Error(res.statusText);
+        if (res.status === 401){
+            // Pelanggan tanpa login coba akses endpoint kasir/admin -> jangan anggap offline, tapi info
+            console.warn("401 Unauthorized for", path, "- butuh login kasir/admin/superadmin");
+            // Jika path public seperti /menu/ yang sekarang public, tidak akan 401
+            // Untuk endpoint protected, return null tapi beri hint
+            if(path.includes("/menu/") && opts.method==="GET") return null;
+            // Jika 401 saat pelanggan mode, jangan redirect paksa
+            const role = sessionStorage.getItem("ald_role") || "pelanggan";
+            if(role !== "pelanggan"){
+                console.warn("Token expired, redirect login?");
+                // optional: hapus token jika kasir/admin token expired
+                // sessionStorage.removeItem("ald_token"); localStorage.removeItem("ald_token");
+            }
+            throw new Error("Unauthorized 401 - butuh login " + role);
+        }
+        if (res.status === 403){
+            console.warn("403 Forbidden for", path, "- role tidak cukup");
+            const j = await res.json().catch(()=>({detail: res.statusText}));
+            alert("Akses ditolak (403): " + (j.detail || "Hanya role tertentu"));
+            throw new Error(j.detail || "Forbidden");
+        }
+        if (!res.ok) throw new Error(res.status + " " + res.statusText);
         const ct = res.headers.get("content-type") || "";
         if (ct.includes("application/json")) return await res.json();
         return await res.text();
     } catch (e) {
+        if(e.message && (e.message.includes("401") || e.message.includes("403"))) {
+            // jangan fallback diam-diam untuk auth error
+            console.warn("apiFetch auth error:", path, e.message);
+            return null;
+        }
         // console.warn("API unavailable:", path, e.message);
         return null;
     }
@@ -176,17 +201,18 @@ function renderMenuMakananMinuman(){
 
     function itemHtml(item){
         const qty = keranjang[item.id] || 0;
+        const sold = item.is_sold === true;
         return `
-        <div class="menu-item ${qty>0?'selected':''}" onclick="tambahMenu('${item.id}')">
-            <img src="${item.gambar}" alt="${item.nama}" class="menu-thumb" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace('.jpg','.svg'); if(!this.src.includes('.svg')) this.src='static/assets/AGK.jpg'">
+        <div class="menu-item ${qty>0?'selected':''} ${sold?'sold':''}" onclick="${sold ? '' : `tambahMenu('${item.id}')`}" style="${sold?'opacity:0.6; filter:grayscale(0.5); position:relative;':''}">
+            ${sold ? '<span style="position:absolute; top:8px; right:8px; background:#dc2626; color:white; padding:3px 8px; border-radius:8px; font-size:10px; font-weight:800; z-index:2;">HABIS / SOLD</span>' : ''}
+            <img src="${item.gambar}" alt="${item.nama}" class="menu-thumb" loading="lazy" onerror="this.onerror=null; this.src=this.src.replace('.jpg','.svg'); if(!this.src.includes('.svg')) this.src='static/assets/AGK.jpg'" style="${sold?'filter:grayscale(1);':''}">
             <div class="menu-info">
-                <strong>${item.nama}</strong>
+                <strong>${item.nama} ${sold?'<span style="color:#dc2626; font-size:10px; border:1px solid #fecaca; background:#fee2e2; padding:1px 5px; border-radius:6px;">SOLD</span>':''}</strong>
                 <small>${item.kategori} - ${formatRupiah(item.harga)}</small>
                 ${item.deskripsi ? `<small style="color:#a8a29e; display:block; font-size:10.5px; line-height:1.2;">${item.deskripsi}</small>` : ''}
             </div>
             <div class="menu-action" onclick="event.stopPropagation()">
-                ${qty>0 ? `<button class="btn-qty" onclick="kurangMenu('${item.id}')">-</button><span class="qty-badge">${qty}</span>` : ''}
-                <button class="btn-qty add" onclick="tambahMenu('${item.id}')" title="Tambah">+</button>
+                ${sold ? '<span style="color:#dc2626; font-size:11px; font-weight:800; padding:6px 10px; border:1px solid #fecaca; background:#fee2e2; border-radius:20px;">Habis</span>' : (qty>0 ? `<button class="btn-qty" onclick="kurangMenu('${item.id}')">-</button><span class="qty-badge">${qty}</span>` : '') + `<button class="btn-qty add" onclick="tambahMenu('${item.id}')" title="Tambah">+</button>`}
             </div>
         </div>
         `;
@@ -197,6 +223,11 @@ function renderMenuMakananMinuman(){
 }
 
 function tambahMenu(id){
+    const item = DAFTAR_MENU.find(m=> m.id===id);
+    if(item && item.is_sold){
+        alert("Maaf, " + item.nama + " sedang HABIS (SOLD). Silakan pilih menu lain, Lur!");
+        return;
+    }
     keranjang[id] = (keranjang[id] || 0) + 1;
     renderMenuMakananMinuman();
     updateKeranjang();

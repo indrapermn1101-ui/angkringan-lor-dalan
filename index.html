@@ -11,24 +11,45 @@
 </head>
 <body>
     <script>
-    // === GUARD: Dashboard wajib login via login.html ===
-    // Jika tidak ada token atau token invalid, redirect ke login.html
+    // === GUARD RBAC: Pelanggan tanpa login BOLEH akses (public), Kasir/Admin/Superadmin butuh login ===
+    // Rule: Pelanggan = tanpa token -> mode public (hanya lihat menu & pesan)
+    // Kasir/Admin/Superadmin -> wajib login via login.html
     (function(){
         const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        // Set global role untuk JS lain
+        window.CURRENT_ROLE = "pelanggan";
+        window.IS_PUBLIC = true;
         if(!token){
-            // Belum login, arahkan ke login.html (entry point)
-            // Hindari loop jika sudah di login.html
-            if(!location.pathname.endsWith("login.html")){
-                location.replace("login.html");
-            }
+            // PELANGGAN: tanpa login, jangan redirect - biarkan akses public
+            sessionStorage.setItem("ald_role", "pelanggan");
+            console.log("Mode PELANGGAN (tanpa login) - hanya menu & pesan");
         } else {
+            window.IS_PUBLIC = false;
             // Jika ada token tapi bukan fallback lokal, verifikasi ke API (async)
             if(token !== "local-fallback-token"){
                 const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
                 fetch(API_BASE + "/auth/me", {headers:{"Authorization":"Bearer "+token}})
                 .then(r=>{ if(!r.ok) throw new Error("invalid"); return r.json(); })
-                .then(u=>{ sessionStorage.setItem("ald_user", u.username); sessionStorage.setItem("ald_role", u.role); })
-                .catch(()=>{ sessionStorage.removeItem("ald_token"); localStorage.removeItem("ald_token"); if(!location.pathname.endsWith("login.html")) location.replace("login.html"); });
+                .then(u=>{
+                    sessionStorage.setItem("ald_user", u.username);
+                    sessionStorage.setItem("ald_role", u.role);
+                    window.CURRENT_ROLE = u.role;
+                    window.IS_PUBLIC = false;
+                    document.dispatchEvent(new CustomEvent("roleReady", {detail: u}));
+                })
+                .catch(()=>{
+                    // Token invalid/expired -> fallback ke pelanggan, tapi beri opsi login
+                    console.warn("Token invalid, fallback ke pelanggan");
+                    // Jangan auto-hapus dan redirect paksa; biarkan sebagai pelanggan tapi hapus token
+                    sessionStorage.removeItem("ald_token"); localStorage.removeItem("ald_token");
+                    sessionStorage.setItem("ald_role", "pelanggan");
+                    window.CURRENT_ROLE = "pelanggan";
+                    window.IS_PUBLIC = true;
+                });
+            } else {
+                window.CURRENT_ROLE = "superadmin"; // local fallback dianggap superadmin
+                sessionStorage.setItem("ald_role", "superadmin");
+                window.IS_PUBLIC = false;
             }
         }
     })();
@@ -56,15 +77,27 @@
                 <a href="#minuman" class="nav-item" onclick="setActive(this)">
                     <span>2. Daftar Minuman</span>
                 </a>
-                <a href="#daftar" class="nav-item" onclick="setActive(this)">
-                    <span>3. Daftar Pesanan</span>
+                <a href="#daftar" class="nav-item" id="navDaftar" onclick="setActive(this)">
+                    <span>3. Daftar Pesanan</span> <small id="navDaftarLock" style="margin-left:auto; font-size:10px; opacity:0.7;">🔒</small>
                 </a>
-                <a href="#pembayaran" class="nav-item" onclick="setActive(this)">
-                    <span>4. Pembayaran</span>
+                <a href="#pembayaran" class="nav-item" id="navBayar" onclick="setActive(this)">
+                    <span>4. Pembayaran</span> <small id="navBayarLock" style="margin-left:auto; font-size:10px; opacity:0.7;">🔒</small>
+                </a>
+                <a href="#kasirPanel" class="nav-item" id="navKasir" style="display:none;" onclick="setActive(this)">
+                    <span>📋 Panel Kasir</span>
+                </a>
+                <a href="#adminPanel" class="nav-item" id="navAdmin" style="display:none;" onclick="setActive(this)">
+                    <span>🛠️ Kelola Menu (Admin)</span>
+                </a>
+                <a href="#superadminPanel" class="nav-item" id="navSuper" style="display:none;" onclick="setActive(this)">
+                    <span>🔐 Superadmin</span>
                 </a>
                 <p class="nav-label" style="margin-top:18px;">WARUNG</p>
                 <a href="#" class="nav-item" onclick="alert('Angkringan Lor Dalan\nSambi Gedong, Tawengan, Sambi, Boyolali\nBuka: 17.00 - 02.00 WIB\nWA: 0812-3456-7890')">
                     <span>Bantuan</span>
+                </a>
+                <a href="login.html" class="nav-item" id="navLogin" style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3);">
+                    <span>🔑 Login Kasir/Admin</span>
                 </a>
             </nav>
 
@@ -81,8 +114,9 @@
                         <span>Total Omzet</span>
                     </div>
                 </div>
-                <button onclick="handleLogout()" style="width:100%; margin-top:12px; background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; backdrop-filter:blur(6px);">Keluar (Logout)</button>
-                <p style="font-size:10px; color:rgba(255,255,255,0.6); text-align:center; margin-top:6px;" id="loginUserInfo">-</p>
+                <button onclick="handleLogout()" id="btnLogout" style="width:100%; margin-top:12px; background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; backdrop-filter:blur(6px); display:none;">Keluar (Logout)</button>
+                <p style="font-size:10px; color:rgba(255,255,255,0.6); text-align:center; margin-top:6px;" id="loginUserInfo">Mode: Pelanggan (tanpa login)</p>
+                <p id="roleBadge" style="font-size:10px; color:#fde68a; text-align:center; margin-top:4px; font-weight:700; letter-spacing:0.5px; background:rgba(255,255,255,0.1); padding:4px; border-radius:6px;">PELANGGAN</p>
                 <p class="sidebar-copy">&copy; 2026 Angkringan Lor Dalan<br><small>Hangat - Merakyat - Ngangeni</small></p>
             </div>
         </aside>
@@ -463,6 +497,128 @@
                     </div>
                 </div>
 
+                <!-- KASIR PANEL - MENU YANG DIPILIH CUSTOMER & TOTAL BAYAR -->
+                <div class="card table-card" id="kasirPanel" style="display:none; margin-top:28px; border:2px solid #16a34a;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#15803d,#16a34a); color:white;">
+                        <h3 style="color:white;">📋 Panel Kasir — Pesanan Customer & Tagihan</h3>
+                        <span class="nota-badge" id="kasir Pending" style="background:white; color:#15803d;">Kasir Mode</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <p style="font-size:12px; color:#78716c; margin-bottom:14px;">Khusus <b>Kasir</b> (juga Admin/Superadmin). Melihat <b>menu apa yang dipilih customer</b>, qty, harga satuan & <b>total yang harus dibayar</b> per nota. Aksi: Ubah status, Tandai Lunas, Cetak Struk, WA Customer.</p>
+                        <div class="grid-2" style="margin-bottom:16px;">
+                            <div class="stat" style="background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color:#86efac;">
+                                <div>
+                                    <strong id="kasirTotalPesanan">0</strong>
+                                    <span>Pesanan Antri/Proses (Perlu Dilayani)</span>
+                                </div>
+                            </div>
+                            <div class="stat" style="background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;">
+                                <div>
+                                    <strong id="kasirTotalTagihan">Rp 0</strong>
+                                    <span>Total Tagihan Belum Lunas</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                            <select id="kasirFilter" onchange="renderKasirPanel()" style="padding:8px 12px; border:1.5px solid #fde68a; border-radius:10px; font-size:12px; background:#fffbeb;">
+                                <option value="">Semua Status</option>
+                                <option value="Antri">Antri</option>
+                                <option value="Proses Masak">Proses Masak</option>
+                                <option value="Siap Saji">Siap Saji</option>
+                                <option value="Selesai / Lunas">Lunas</option>
+                            </select>
+                            <input id="kasirCari" type="text" placeholder="Cari nota / nama / meja..." oninput="renderKasirPanel()" style="flex:1; min-width:180px; padding:8px 12px; border:1.5px solid #fde68a; border-radius:10px; font-size:12px; background:#fffbeb;">
+                            <button onclick="renderKasirPanel()" style="background:#dcfce7; border:1px solid #bbf7d0; color:#15803d; padding:8px 14px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">Refresh</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nota / Waktu</th>
+                                        <th>Customer / Meja</th>
+                                        <th>Menu Dipilih (qty x harga)</th>
+                                        <th>Total Bayar</th>
+                                        <th>Status</th>
+                                        <th>Aksi Kasir</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyKasir">
+                                    <tr class="empty-row"><td colspan="6">Belum ada pesanan.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p style="margin-top:10px; font-size:11px; color:#78716c;">Tip Kasir: Klik <b>Bayar</b> untuk tandai Lunas, <b>WA</b> untuk chat customer, <b>Lihat</b> untuk cetak struk.</p>
+                    </div>
+                </div>
+
+                <!-- ADMIN PANEL - CRUD MAKANAN & MINUMAN + LABEL SOLD -->
+                <div class="card table-card" id="adminPanel" style="display:none; margin-top:28px; border:2px solid #d97706;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#92400e,#d97706); color:white;">
+                        <h3 style="color:white;">🛠️ Kelola Menu — Admin (CRUD + SOLD)</h3>
+                        <span class="nota-badge" id="adminMenuCount" style="background:white; color:#92400e;">16 Menu</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <p style="font-size:12px; color:#78716c; margin-bottom:14px;">Khusus <b>Admin</b> (dan Superadmin). Tambah / Edit / Hapus makanan & minuman. Jika stok habis, klik <b>SOLD</b> → pelanggan lihat label <span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:6px; font-weight:800; font-size:10px;">HABIS</span> dan tidak bisa pesan.</p>
+                        <!-- Form Tambah/Edit -->
+                        <div style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; padding:16px; margin-bottom:16px;">
+                            <h4 style="font-size:13px; color:#92400e; font-weight:800; margin:0 0 12px 0;">➕ Tambah / Edit Menu</h4>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>ID Menu * (unik, tanpa spasi, cth: nasgor_baru)</label>
+                                    <input id="admId" type="text" placeholder="id unik">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nama Menu *</label>
+                                    <input id="admNama" type="text" placeholder="Nama menu">
+                                </div>
+                            </div>
+                            <div class="grid-2" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Harga (Rp) *</label>
+                                    <input id="admHarga" type="number" placeholder="5000">
+                                </div>
+                                <div class="form-group">
+                                    <label>Kategori</label>
+                                    <select id="admKategori"><option>Nasi</option><option>Sate</option><option>Gorengan</option><option>Bakaran</option><option>Minuman</option><option>Mie</option></select>
+                                </div>
+                            </div>
+                            <div class="grid-2" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Gambar (path)</label>
+                                    <input id="admGambar" type="text" placeholder="static/images/nama.jpg">
+                                </div>
+                                <div class="form-group">
+                                    <label>Deskripsi</label>
+                                    <input id="admDeskripsi" type="text" placeholder="Deskripsi singkat">
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:14px;">
+                                <button onclick="adminTambahMenu()" style="flex:1; background:#92400e; color:white; border:none; padding:11px; border-radius:10px; font-weight:800; cursor:pointer;">Simpan Menu</button>
+                                <button onclick="adminResetForm()" style="background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; padding:11px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Reset</button>
+                                <button onclick="adminLoadMenu()" style="background:white; color:#92400e; border:1.5px solid #fde68a; padding:11px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Reload</button>
+                            </div>
+                            <p id="adminMsg" style="font-size:12px; margin-top:8px; display:none;"></p>
+                        </div>
+                        <!-- Tabel Kelola -->
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID / Gambar</th>
+                                        <th>Nama / Kategori</th>
+                                        <th>Harga</th>
+                                        <th>Status</th>
+                                        <th>Aksi Admin</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyAdminMenu">
+                                    <tr class="empty-row"><td colspan="5">Memuat menu...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SUPERADMIN PANEL - APPROVAL KASIR/ADMIN -->
                 <div class="card table-card" id="superadminPanel" style="display:none; margin-top:28px; border:2px solid #92400e;">
                     <div class="card-header" style="background:linear-gradient(135deg,#451a03,#92400e); color:white;">
@@ -508,13 +664,120 @@
 
     <script src="static/js/script.js"></script>
     <script>
+    // === RBAC Frontend Visibility ===
+    function applyRoleVisibility(role){
+        const isPelanggan = !role || role==="pelanggan";
+        const isKasir = role==="kasir";
+        const isAdmin = role==="admin";
+        const isSuper = role==="superadmin";
+        // Nav locks
+        const navDaftarLock = document.getElementById("navDaftarLock");
+        const navBayarLock = document.getElementById("navBayarLock");
+        // Panels visibility
+        const kasirPanel = document.getElementById("kasirPanel");
+        const adminPanel = document.getElementById("adminPanel");
+        const superPanel = document.getElementById("superadminPanel");
+        const daftarCard = document.getElementById("daftar");
+        const bayarCard = document.getElementById("pembayaran");
+        // Nav items
+        const navKasir = document.getElementById("navKasir");
+        const navAdmin = document.getElementById("navAdmin");
+        const navSuper = document.getElementById("navSuper");
+        const navLogin = document.getElementById("navLogin");
+        const btnLogout = document.getElementById("btnLogout");
+        const roleBadge = document.getElementById("roleBadge");
+        // Default hide all role panels
+        if(kasirPanel) kasirPanel.style.display = "none";
+        if(adminPanel) adminPanel.style.display = "none";
+        if(superPanel) superPanel.style.display = "none";
+        if(navKasir) navKasir.style.display = "none";
+        if(navAdmin) navAdmin.style.display = "none";
+        if(navSuper) navSuper.style.display = "none";
+        if(isPelanggan){
+            if(roleBadge) { roleBadge.textContent="PELANGGAN (tanpa login)"; roleBadge.style.background="rgba(245,158,11,0.2)"; roleBadge.style.color="#fde68a"; }
+            if(navLogin) navLogin.style.display="flex";
+            if(btnLogout) btnLogout.style.display="none";
+            // Pelanggan tidak lihat daftar/bayar detail (hanya menu & form)
+            if(daftarCard) daftarCard.style.display="none";
+            if(bayarCard) bayarCard.style.display="none";
+            if(navDaftarLock) navDaftarLock.textContent="🔒 Login kasir";
+            if(navBayarLock) navBayarLock.textContent="🔒 Login kasir";
+        } else if(isKasir){
+            if(roleBadge) { roleBadge.textContent="KASIR"; roleBadge.style.background="#16a34a"; roleBadge.style.color="white"; }
+            if(navLogin) navLogin.style.display="none";
+            if(btnLogout) btnLogout.style.display="block";
+            if(kasirPanel) kasirPanel.style.display="block";
+            if(navKasir) navKasir.style.display="flex";
+            if(daftarCard) daftarCard.style.display="block";
+            if(bayarCard) bayarCard.style.display="block";
+            if(navDaftarLock) navDaftarLock.textContent="";
+            if(navBayarLock) navBayarLock.textContent="";
+        } else if(isAdmin){
+            if(roleBadge) { roleBadge.textContent="ADMIN"; roleBadge.style.background="#d97706"; roleBadge.style.color="white"; }
+            if(navLogin) navLogin.style.display="none";
+            if(btnLogout) btnLogout.style.display="block";
+            if(kasirPanel) kasirPanel.style.display="block";
+            if(adminPanel) adminPanel.style.display="block";
+            if(navKasir) navKasir.style.display="flex";
+            if(navAdmin) navAdmin.style.display="flex";
+            if(daftarCard) daftarCard.style.display="block";
+            if(bayarCard) bayarCard.style.display="block";
+            if(navDaftarLock) navDaftarLock.textContent="";
+            if(navBayarLock) navBayarLock.textContent="";
+        } else if(isSuper){
+            if(roleBadge) { roleBadge.textContent="SUPERADMIN"; roleBadge.style.background="#451a03"; roleBadge.style.color="#fde68a"; }
+            if(navLogin) navLogin.style.display="none";
+            if(btnLogout) btnLogout.style.display="block";
+            if(kasirPanel) kasirPanel.style.display="block";
+            if(adminPanel) adminPanel.style.display="block";
+            if(superPanel) superPanel.style.display="block";
+            if(navKasir) navKasir.style.display="flex";
+            if(navAdmin) navAdmin.style.display="flex";
+            if(navSuper) navSuper.style.display="flex";
+            if(daftarCard) daftarCard.style.display="block";
+            if(bayarCard) bayarCard.style.display="block";
+            if(navDaftarLock) navDaftarLock.textContent="";
+            if(navBayarLock) navBayarLock.textContent="";
+        }
+        // render kasir panel if visible
+        if(!isPelanggan) setTimeout(()=>{ if(typeof renderKasirPanel==="function") renderKasirPanel(); if(typeof adminLoadMenu==="function") adminLoadMenu(); }, 300);
+    }
+
     // Update info user & heartbeat untuk online/offline
     let heartbeatInterval = null;
     window.addEventListener("DOMContentLoaded", ()=>{
         const u = sessionStorage.getItem("ald_user") || localStorage.getItem("ald_user") || "Unknown";
-        const r = sessionStorage.getItem("ald_role") || localStorage.getItem("ald_role") || "";
+        const r = sessionStorage.getItem("ald_role") || localStorage.getItem("ald_role") || "pelanggan";
         const el = document.getElementById("loginUserInfo");
-        if(el) el.textContent = "Login: " + u + (r ? " ("+r+")" : "") + " • " + new Date().toLocaleTimeString('id-ID');
+        if(el){
+            if(r==="pelanggan" || !sessionStorage.getItem("ald_token")){
+                el.textContent = "Mode: Pelanggan (tanpa login) • " + new Date().toLocaleTimeString('id-ID');
+            } else {
+                el.textContent = "Login: " + u + (r ? " ("+r+")" : "") + " • " + new Date().toLocaleTimeString('id-ID');
+            }
+        }
+        applyRoleVisibility(r);
+        // Listen roleReady dari guard async
+        document.addEventListener("roleReady", (e)=>{
+            const nr = e.detail.role;
+            const nu = e.detail.username;
+            if(el) el.textContent = "Login: " + nu + " ("+nr+") • " + new Date().toLocaleTimeString('id-ID');
+            applyRoleVisibility(nr);
+            // re-init heartbeat based on new role
+            const rr = nr;
+            if(rr === "superadmin"){
+                const panel = document.getElementById("superadminPanel");
+                if(panel) panel.style.display = "block";
+                loadPendingUsers(); loadActiveUsers();
+                sendHeartbeat();
+                heartbeatInterval = setInterval(()=>{ sendHeartbeat(); }, 15000);
+                setInterval(()=>{ loadPendingUsers(); loadActiveUsers(); }, 5000);
+                document.getElementById("heartbeatStatus").textContent = "Heartbeat: aktif (15s) - Pending auto-refresh 5s";
+            } else if(rr === "admin" || rr === "kasir"){
+                sendHeartbeat();
+                heartbeatInterval = setInterval(sendHeartbeat, 15000);
+            }
+        });
         // Tampilkan panel superadmin jika superadmin, dan atur polling agar langsung muncul saat ada pendaftar baru
         let pendingInterval = null;
         if(r === "superadmin"){
@@ -696,6 +959,151 @@
             listEl.innerHTML = "<p style='color:#dc2626; font-size:12px;'>Error load aktif</p>";
         }
     }
+
+    // === KASIR PANEL: render yang dipilih customer + total bayar ===
+    function renderKasirPanel(){
+        const tbody = document.getElementById("tbodyKasir");
+        if(!tbody) return;
+        const filterStatus = document.getElementById("kasirFilter")?.value || "";
+        const cari = (document.getElementById("kasirCari")?.value || "").toLowerCase();
+        let data = dataPesanan;
+        if(filterStatus) data = data.filter(d=> d.status===filterStatus);
+        if(cari) data = data.filter(d=> d.nota.toLowerCase().includes(cari) || d.nama.toLowerCase().includes(cari) || d.meja.toLowerCase().includes(cari));
+        // stats
+        const antri = dataPesanan.filter(d=> d.status==="Antri" || d.status==="Proses Masak").length;
+        const tagihan = dataPesanan.filter(d=> !d.status.toLowerCase().includes("selesai") && !d.status.toLowerCase().includes("lunas")).reduce((a,b)=>a+(b.total||0),0);
+        const elA = document.getElementById("kasirTotalPesanan");
+        const elT = document.getElementById("kasirTotalTagihan");
+        if(elA) elA.textContent = antri;
+        if(elT) elT.textContent = formatRupiah(tagihan);
+        if(data.length===0){
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="6">${filterStatus||cari? "Tidak ada hasil filter" : "Belum ada pesanan."}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = data.map(d=>{
+            const realIdx = dataPesanan.indexOf(d);
+            const menuList = d.items.map(it=> `${it.nama} <small style="color:#78716c;">${it.qty}x ${formatRupiah(it.harga)}</small>`).join("<br>");
+            const isLunas = d.status.toLowerCase().includes("selesai") || d.status.toLowerCase().includes("lunas");
+            const waLink = d.wa && d.wa!=="-" ? `<a href="https://wa.me/62${d.wa.replace(/^0/,'')}" target="_blank" style="color:#16a34a; font-weight:700; text-decoration:none;">WA</a>` : "-";
+            return `<tr>
+                <td><strong style="color:#92400e;">${d.nota}</strong><br><small>${d.tanggal} ${d.jam}</small></td>
+                <td><strong>${d.nama}</strong><br><small>${d.meja} ${waLink}</small></td>
+                <td style="font-size:12px; line-height:1.5;">${menuList}</td>
+                <td><strong style="color:#92400e; font-size:14px;">${d.totalFormatted}</strong><br><small>${d.pembayaran}</small></td>
+                <td><span class="badge-status ${statusClass(d.status)}">${d.status}</span></td>
+                <td>
+                    ${!isLunas ? `<button class="btn-icon" onclick="tandaiLunas(${realIdx})" style="color:#15803d; background:#dcfce7; border-color:#bbf7d0;">Bayar</button>` : `<span style="color:#15803d; font-weight:700; font-size:11px;">Lunas</span>`}
+                    <button class="btn-icon" onclick="lihatNota(${realIdx})">Struk</button>
+                    <button class="btn-icon" onclick="ubahStatus(${realIdx})" style="color:#d97706;">Ubah</button>
+                </td>
+            </tr>`;
+        }).join("");
+    }
+
+    // === ADMIN PANEL: CRUD + SOLD ===
+    async function adminLoadMenu(){
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const tbody = document.getElementById("tbodyAdminMenu");
+        if(!tbody) return;
+        try{
+            const data = await apiFetch("/menu/");
+            // apiFetch uses global DAFTAR_MENU if API_AVAILABLE, but we want fresh list via direct fetch public
+            let list = data;
+            if(!list){
+                // fallback to DAFTAR_MENU
+                list = DAFTAR_MENU;
+            }
+            document.getElementById("adminMenuCount").textContent = list.length + " Menu";
+            tbody.innerHTML = list.map(m=>`
+                <tr style="${m.is_sold ? 'background:#fef2f2;' : ''}">
+                    <td><strong>${m.id}</strong><br><img src="${m.gambar}" style="width:40px; height:40px; border-radius:8px; object-fit:cover; border:1px solid #fde68a;" onerror="this.src='static/assets/AGK.jpg'"></td>
+                    <td><strong>${m.nama}</strong><br><small>${m.kategori} ${m.is_sold ? '<span style=\"background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:6px; font-size:10px; font-weight:800;\">HABIS</span>':''}</small></td>
+                    <td><strong style="color:#92400e;">${formatRupiah(m.harga)}</strong></td>
+                    <td>${m.is_active ? '<span style=\"color:#16a34a; font-size:11px; font-weight:700;\">Aktif</span>' : '<span style=\"color:#a8a29e; font-size:11px;\">Nonaktif</span>'} ${m.is_sold ? '<span style=\"color:#dc2626; font-size:11px; font-weight:800;\">SOLD</span>':''}</td>
+                    <td>
+                        <button onclick="adminEditFill('${m.id}')" style="background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">Edit</button>
+                        <button onclick="adminToggleSold('${m.id}', ${!m.is_sold})" style="background:${m.is_sold ? '#dcfce7; color:#15803d; border:1px solid #bbf7d0' : '#fee2e2; color:#dc2626; border:1px solid #fecaca'}; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">${m.is_sold ? 'Restock' : 'SOLD'}</button>
+                        <button onclick="adminHapusMenu('${m.id}')" style="background:#fee2e2; border:1px solid #fecaca; color:#dc2626; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">Hapus</button>
+                    </td>
+                </tr>
+            `).join("");
+        }catch(e){
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="5">Gagal load menu: ${e.message}</td></tr>`;
+        }
+    }
+    function adminEditFill(id){
+        const m = DAFTAR_MENU.find(x=> x.id===id);
+        if(!m) return alert("Menu tidak ditemukan di cache, reload dulu");
+        document.getElementById("admId").value = m.id;
+        document.getElementById("admNama").value = m.nama;
+        document.getElementById("admHarga").value = m.harga;
+        document.getElementById("admKategori").value = m.kategori;
+        document.getElementById("admGambar").value = m.gambar;
+        document.getElementById("admDeskripsi").value = m.deskripsi || "";
+        document.getElementById("admId").readOnly = true;
+        window.scrollTo({top: document.getElementById("adminPanel").offsetTop-20, behavior:"smooth"});
+    }
+    function adminResetForm(){
+        document.getElementById("admId").value=""; document.getElementById("admNama").value=""; document.getElementById("admHarga").value=""; document.getElementById("admKategori").value="Nasi"; document.getElementById("admGambar").value=""; document.getElementById("admDeskripsi").value=""; document.getElementById("admId").readOnly=false;
+        const el=document.getElementById("adminMsg"); if(el){ el.style.display="none"; el.textContent=""; }
+    }
+    async function adminTambahMenu(){
+        const id = document.getElementById("admId").value.trim();
+        const nama = document.getElementById("admNama").value.trim();
+        const harga = parseInt(document.getElementById("admHarga").value);
+        const kategori = document.getElementById("admKategori").value;
+        const gambar = document.getElementById("admGambar").value.trim() || `static/images/${id}.jpg`;
+        const deskripsi = document.getElementById("admDeskripsi").value.trim();
+        const msgEl = document.getElementById("adminMsg");
+        if(!id || !nama || !harga){ msgEl.style.display="block"; msgEl.style.color="#dc2626"; msgEl.textContent="ID, Nama, Harga wajib"; return; }
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token){ msgEl.style.display="block"; msgEl.style.color="#dc2626"; msgEl.textContent="Harus login sebagai admin/superadmin"; return; }
+        const isEdit = DAFTAR_MENU.some(m=> m.id===id);
+        const method = isEdit ? "PUT" : "POST";
+        const url = isEdit ? `/menu/${id}` : "/menu/";
+        try{
+            const res = await fetch(API_BASE + url, {method, headers:{"Content-Type":"application/json","Authorization":"Bearer "+token}, body: JSON.stringify({id,nama,harga,kategori,gambar,deskripsi})});
+            const data = await res.json().catch(()=>({}));
+            if(!res.ok) throw new Error(data.detail || res.statusText);
+            msgEl.style.display="block"; msgEl.style.color="#16a34a"; msgEl.textContent = (isEdit?"Update":"Tambah")+" berhasil: "+data.nama;
+            await checkApi(); await loadMenuFromApi(); renderMenuMakananMinuman(); updateBadgeMenu(); adminLoadMenu();
+        }catch(e){
+            msgEl.style.display="block"; msgEl.style.color="#dc2626"; msgEl.textContent="Gagal: "+e.message;
+        }
+    }
+    async function adminToggleSold(id, toSold){
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token) return alert("Harus login admin");
+        if(!confirm((toSold?"Tandai HABIS (SOLD)":"Restock")+" untuk "+id+"? Pelanggan "+(toSold?"tidak bisa pesan":"bisa pesan lagi")+".")) return;
+        try{
+            const res = await fetch(API_BASE + `/menu/${id}/sold`, {method:"PATCH", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token}, body: JSON.stringify({is_sold: toSold})});
+            const data = await res.json().catch(()=>({}));
+            if(!res.ok) throw new Error(data.detail || res.statusText);
+            alert((toSold?"SOLD":"Restock")+" sukses: "+data.nama);
+            await loadMenuFromApi(); renderMenuMakananMinuman(); adminLoadMenu();
+        }catch(e){ alert("Gagal: "+e.message); }
+    }
+    async function adminHapusMenu(id){
+        if(!confirm("Nonaktifkan menu "+id+"? (soft delete is_active=false)")) return;
+        const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        try{
+            const res = await fetch(API_BASE + `/menu/${id}`, {method:"DELETE", headers:{"Authorization":"Bearer "+token}});
+            const data = await res.json().catch(()=>({}));
+            if(!res.ok) throw new Error(data.detail || res.statusText);
+            alert("Hapus: "+data.message);
+            await loadMenuFromApi(); renderMenuMakananMinuman(); updateBadgeMenu(); adminLoadMenu();
+        }catch(e){ alert("Gagal: "+e.message); }
+    }
+    // Hook renderKasirPanel ke update data pesanan
+    const _origRenderTable = typeof renderTable==="function" ? renderTable : null;
+    const _origRenderPembayaran = typeof renderPembayaran==="function" ? renderPembayaran : null;
+    // Override agar kasir panel ikut update saat data pesanan berubah (via loadPesananFromApi)
+    const _origLoadPesanan = typeof loadPesananFromApi==="function" ? loadPesananFromApi : null;
+    // Patch global updateStat to also update kasir
+    setInterval(()=>{ if(typeof renderKasirPanel==="function" && document.getElementById("kasirPanel")?.style.display!=="none") renderKasirPanel(); }, 8000);
     </script>
 </body>
 </html>

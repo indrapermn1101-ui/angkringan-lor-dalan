@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import date, datetime
 from ..database import get_db
 from .. import models, schemas
-from ..auth import get_current_active_user
+from ..auth import get_current_active_user, get_current_kasir_or_above, get_current_superuser, get_optional_user
 
 router = APIRouter(prefix="/api/pesanan", tags=["Pesanan"])
 
@@ -63,7 +63,7 @@ def list_pesanan(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_active_user)
+    current_user: models.User = Depends(get_current_kasir_or_above)
 ):
     query = db.query(models.Pesanan).order_by(models.Pesanan.waktu_simpan.desc())
     if status:
@@ -82,26 +82,31 @@ def list_pesanan(
     return [pesanan_to_out(p) for p in pesanan_list]
 
 @router.get("/{nota}", response_model=schemas.PesananOut)
-def get_pesanan(nota: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def get_pesanan(nota: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     pesanan = db.query(models.Pesanan).filter(models.Pesanan.nota == nota).first()
     if not pesanan:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
     return pesanan_to_out(pesanan)
 
+# Pelanggan tanpa login boleh buat pesanan (RULE Pelanggan)
 @router.post("/", response_model=schemas.PesananOut, status_code=201)
-def create_pesanan(payload: schemas.PesananCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def create_pesanan(payload: schemas.PesananCreate, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(get_optional_user)):
     if not payload.nama or not payload.meja:
         raise HTTPException(status_code=400, detail="Nama dan Meja wajib diisi")
     if not payload.items or len(payload.items) == 0:
         raise HTTPException(status_code=400, detail="Minimal 1 menu wajib dipilih")
 
-    # Validasi menu & hitung total
+    # Validasi menu & hitung total (tolak jika SOLD / tidak aktif)
     total = 0
     items_data = []
     for it in payload.items:
         menu = db.query(models.Menu).filter(models.Menu.id == it.menu_id).first()
         if not menu:
             raise HTTPException(status_code=404, detail=f"Menu {it.menu_id} tidak ditemukan")
+        if not menu.is_active:
+            raise HTTPException(status_code=400, detail=f"Menu {menu.nama} sudah tidak tersedia")
+        if getattr(menu, 'is_sold', False):
+            raise HTTPException(status_code=400, detail=f"Menu {menu.nama} HABIS (SOLD) - hubungi admin")
         if it.qty <= 0:
             raise HTTPException(status_code=400, detail="Qty harus >0")
         subtotal = menu.harga * it.qty
@@ -157,7 +162,7 @@ def create_pesanan(payload: schemas.PesananCreate, db: Session = Depends(get_db)
     return pesanan_to_out(pesanan)
 
 @router.patch("/{nota}/status", response_model=schemas.PesananOut)
-def update_status(nota: str, payload: schemas.StatusUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def update_status(nota: str, payload: schemas.StatusUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     pesanan = db.query(models.Pesanan).filter(models.Pesanan.nota == nota).first()
     if not pesanan:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
@@ -167,7 +172,7 @@ def update_status(nota: str, payload: schemas.StatusUpdate, db: Session = Depend
     return pesanan_to_out(pesanan)
 
 @router.patch("/{nota}/lunas", response_model=schemas.PesananOut)
-def tandai_lunas(nota: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def tandai_lunas(nota: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     pesanan = db.query(models.Pesanan).filter(models.Pesanan.nota == nota).first()
     if not pesanan:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
@@ -177,7 +182,7 @@ def tandai_lunas(nota: str, db: Session = Depends(get_db), current_user: models.
     return pesanan_to_out(pesanan)
 
 @router.patch("/{nota}", response_model=schemas.PesananOut)
-def update_pesanan(nota: str, payload: schemas.PesananUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def update_pesanan(nota: str, payload: schemas.PesananUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     pesanan = db.query(models.Pesanan).filter(models.Pesanan.nota == nota).first()
     if not pesanan:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
@@ -189,7 +194,7 @@ def update_pesanan(nota: str, payload: schemas.PesananUpdate, db: Session = Depe
     return pesanan_to_out(pesanan)
 
 @router.delete("/{nota}")
-def delete_pesanan(nota: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def delete_pesanan(nota: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     pesanan = db.query(models.Pesanan).filter(models.Pesanan.nota == nota).first()
     if not pesanan:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
@@ -198,7 +203,7 @@ def delete_pesanan(nota: str, db: Session = Depends(get_db), current_user: model
     return {"message": f"Pesanan {nota} dihapus"}
 
 @router.delete("/")
-def delete_all_pesanan(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def delete_all_pesanan(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_superuser)):
     count = db.query(models.Pesanan).count()
     if count == 0:
         raise HTTPException(status_code=404, detail="Belum ada data pesanan")

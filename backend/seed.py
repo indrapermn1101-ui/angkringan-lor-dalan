@@ -35,29 +35,88 @@ DAFTAR_MENU = [
 def seed():
     # Buat tabel
     Base.metadata.create_all(bind=engine)
+    # Migrasi DB lama: pastikan kolom is_sold ada sebelum query ORM
+    from sqlalchemy import text
+    try:
+        # Cek via raw connection sebelum ORM
+        with engine.connect() as conn:
+            cols = [c[1] for c in conn.execute(text("PRAGMA table_info(menu)")).fetchall()]
+            if cols and "is_sold" not in cols:
+                conn.execute(text("ALTER TABLE menu ADD COLUMN is_sold BOOLEAN DEFAULT 0"))
+                conn.commit()
+                print("  ~ Migrasi awal: tambah kolom is_sold BOOLEAN DEFAULT 0")
+            # juga cek users table kolom baru tidak ada
+    except Exception as e:
+        print(f"  ! Migrasi awal skip: {e}")
     db = SessionLocal()
     try:
         # Cek sudah ada?
-        existing = db.query(Menu).count()
+        try:
+            existing = db.query(Menu).count()
+        except Exception as e:
+            # Jika masih gagal karena is_sold, force recreate
+            print(f"  ! Count gagal ({e}), coba ALTER lagi...")
+            try:
+                db.rollback()
+                db.execute(text("ALTER TABLE menu ADD COLUMN is_sold BOOLEAN DEFAULT 0"))
+                db.commit()
+                print("  ~ Retry ALTER is_sold sukses")
+            except Exception as e2:
+                print(f"  ! Retry ALTER gagal: {e2}, akan hapus & recreate DB")
+                # last resort: drop & recreate
+                try:
+                    import os
+                    db.close()
+                    # backup old db
+                    if os.path.exists("backend/angkringan.db"):
+                        os.rename("backend/angkringan.db", "backend/angkringan.db.bak")
+                        print("  ~ Backup DB lama ke angkringan.db.bak")
+                    Base.metadata.create_all(bind=engine)
+                    db = SessionLocal()
+                except Exception as e3:
+                    print(f"  ! Recreate gagal: {e3}")
+            existing = db.query(Menu).count()
         if existing > 0:
             print(f"Sudah ada {existing} menu, update jika ada perubahan path/gambar.")
             updated = 0
             for m in DAFTAR_MENU:
                 found = db.query(Menu).filter(Menu.id == m["id"]).first()
                 if not found:
-                    db.add(Menu(**m))
+                    db.add(Menu(**m, is_sold=False))
                     print(f"  + Tambah {m['id']} {m['nama']}")
                     updated += 1
                 else:
                     # Update gambar jika masih pakai path lama images/ -> static/images/
+                    # dan tambahkan kolom is_sold jika belum ada (migrasi)
+                    need = False
                     if found.gambar != m["gambar"] or found.harga != m["harga"] or found.nama != m["nama"]:
                         found.gambar = m["gambar"]
                         found.nama = m["nama"]
                         found.harga = m["harga"]
                         found.kategori = m["kategori"]
                         found.deskripsi = m["deskripsi"]
-                        print(f"  ~ Update {m['id']} gambar/harga")
+                        need = True
+                    # cek is_sold column exists (untuk DB lama)
+                    if not hasattr(found, 'is_sold') or found.is_sold is None:
+                        try:
+                            found.is_sold = False
+                            need = True
+                        except: pass
+                    if need:
+                        print(f"  ~ Update {m['id']} gambar/harga/is_sold")
                         updated += 1
+            # Migrasi DB lama tanpa kolom is_sold: tambah kolom via SQL jika perlu
+            try:
+                db.execute
+                # SQLAlchemy akan auto-create kolom saat Base.metadata.create_all, tapi untuk DB lama perlu ALTER
+                from sqlalchemy import text
+                cols = [c[1] for c in db.execute(text("PRAGMA table_info(menu)")).fetchall()]
+                if "is_sold" not in cols:
+                    db.execute(text("ALTER TABLE menu ADD COLUMN is_sold BOOLEAN DEFAULT 0"))
+                    db.commit()
+                    print("  ~ Migrasi: tambah kolom is_sold BOOLEAN DEFAULT 0")
+            except Exception as e:
+                print(f"  ! Migrasi is_sold skip: {e}")
             db.commit()
             if updated == 0:
                 print("Seed update selesai. Tidak ada perubahan.")
@@ -68,7 +127,7 @@ def seed():
             return
 
         for m in DAFTAR_MENU:
-            db.add(Menu(**m))
+            db.add(Menu(**m, is_sold=False))
         db.commit()
         print(f"Berhasil seed {len(DAFTAR_MENU)} menu ke SQLite.")
         for m in DAFTAR_MENU:

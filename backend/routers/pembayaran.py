@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from ..database import get_db
 from .. import models, schemas
-from ..auth import get_current_active_user
+from ..auth import get_current_active_user, get_current_kasir_or_above
 
 router = APIRouter(prefix="/api", tags=["Pembayaran & Statistik"])
 
@@ -11,7 +11,7 @@ def format_rupiah(num: int) -> str:
     return "Rp " + f"{num:,}".replace(",", ".")
 
 @router.get("/pembayaran/rangkuman", response_model=schemas.PembayaranRangkuman)
-def rangkuman_pembayaran(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def rangkuman_pembayaran(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     pesanan_all = db.query(models.Pesanan).all()
     total = len(pesanan_all)
     omzet = sum(p.total for p in pesanan_all) if pesanan_all else 0
@@ -48,7 +48,7 @@ def rangkuman_pembayaran(db: Session = Depends(get_db), current_user: models.Use
     }
 
 @router.get("/stat", response_model=schemas.StatOut)
-def get_stat(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+def get_stat(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_kasir_or_above)):
     total = db.query(models.Pesanan).count()
     antri = db.query(models.Pesanan).filter(
         (models.Pesanan.status == "Antri") | (models.Pesanan.status == "Proses Masak")

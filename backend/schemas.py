@@ -12,10 +12,24 @@ class MenuBase(BaseModel):
     deskripsi: Optional[str] = None
 
 class MenuCreate(MenuBase):
-    pass
+    is_active: Optional[bool] = True
+    is_sold: Optional[bool] = False
+
+class MenuUpdate(BaseModel):
+    nama: Optional[str] = None
+    harga: Optional[int] = None
+    kategori: Optional[str] = None
+    gambar: Optional[str] = None
+    deskripsi: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_sold: Optional[bool] = None
+
+class MenuSoldUpdate(BaseModel):
+    is_sold: bool
 
 class MenuOut(MenuBase):
     is_active: bool = True
+    is_sold: bool = False
     class Config:
         from_attributes = True
 

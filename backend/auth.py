@@ -87,3 +87,39 @@ async def get_current_superuser(current_user: models.User = Depends(get_current_
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Butuh akses superadmin")
     return current_user
+
+# === RBAC Helpers untuk Rule Admin/Kasir/Superadmin/Pelanggan ===
+async def get_current_admin(current_user: models.User = Depends(get_current_active_user)):
+    """Hanya admin atau superadmin (CRUD menu + sold)"""
+    if current_user.role not in ["admin", "superadmin"]:
+        raise HTTPException(status_code=403, detail="Hanya admin / superadmin (CRUD menu)")
+    return current_user
+
+async def get_current_kasir_or_above(current_user: models.User = Depends(get_current_active_user)):
+    """Kasir, admin, superadmin boleh akses pesanan & pembayaran"""
+    if current_user.role not in ["kasir", "admin", "superadmin"]:
+        raise HTTPException(status_code=403, detail="Hanya kasir / admin / superadmin")
+    return current_user
+
+async def get_optional_user(token: Optional[str] = Depends(OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)), db: Session = Depends(get_db)):
+    """Untuk endpoint public yang boleh tanpa login tapi jika ada token akan di-parse (pelanggan)"""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        user = get_user_by_username(db, username=username)
+        if user and user.is_active:
+            # update last_active jika ada token valid
+            try:
+                user.last_active = datetime.utcnow()
+                user.is_online = True
+                db.commit()
+            except:
+                pass
+            return user
+        return None
+    except JWTError:
+        return None

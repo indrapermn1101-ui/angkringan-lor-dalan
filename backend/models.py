@@ -30,6 +30,7 @@ class Menu(Base):
     gambar = Column(String, nullable=False)
     deskripsi = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    is_sold = Column(Boolean, default=False)  # True = HABIS / SOLD (admin label)
 
 class Pesanan(Base):
     __tablename__ = "pesanan"
