@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Kasir - Angkringan Lor Dalan</title>
+    <link rel="icon" type="image/jpeg" href="static/assets/AGK.jpg">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        .kasir-topbar { background: linear-gradient(135deg,#14532d 0%,#15803d 50%,#22c55e 100%); }
+        .role-pill.kasir { background:#22c55e; color:white; padding:6px 12px; border-radius:999px; font-size:11px; font-weight:800; }
+    </style>
+</head>
+<body class="role-kasir">
+    <script>
+    // GUARD kasir.html — hanya kasir/admin/superadmin, pelanggan redirect
+    (function(){
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token){
+            alert("Akses Kasir butuh login. Silakan login sebagai kasir.");
+            location.replace("login.html");
+            return;
+        }
+        if(token !== "local-fallback-token"){
+            const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+            fetch(API_BASE + "/auth/me", {headers:{"Authorization":"Bearer "+token}})
+            .then(r=>{ if(!r.ok) throw new Error("invalid"); return r.json(); })
+            .then(u=>{
+                if(!["kasir","admin","superadmin"].includes(u.role)){
+                    alert("Role "+u.role+" tidak boleh akses kasir.html");
+                    location.replace("index.html");
+                    return;
+                }
+                sessionStorage.setItem("ald_user", u.username);
+                sessionStorage.setItem("ald_role", u.role);
+                window.CURRENT_ROLE=u.role;
+            })
+            .catch(()=>{
+                sessionStorage.removeItem("ald_token"); localStorage.removeItem("ald_token");
+                location.replace("login.html");
+            });
+        } else {
+            window.CURRENT_ROLE="kasir";
+        }
+    })();
+    </script>
+    <div class="app">
+        <aside class="sidebar" style="background: linear-gradient(180deg,#14532d 0%,#166534 50%,#15803d 100%);">
+            <div class="sidebar-brand">
+                <div class="brand-logo"><img src="static/assets/AGK.jpg" alt="Logo"></div>
+                <div><h2>KASIR</h2><span>ANGKRINGAN</span><p>warung.angkringanlordalan.my.id/kasir.html</p></div>
+            </div>
+            <nav class="sidebar-nav">
+                <p class="nav-label">KASIR MENU</p>
+                <a href="#kasirPanel" class="nav-item active"><span>📋 Pesanan & Tagihan</span></a>
+                <a href="#daftar" class="nav-item"><span>📦 Daftar Pesanan</span></a>
+                <a href="#pembayaran" class="nav-item"><span>💰 Pembayaran</span></a>
+                <p class="nav-label" style="margin-top:18px;">LAINNYA</p>
+                <a href="index.html" class="nav-item"><span>🏠 Menu Pelanggan</span></a>
+                <a href="admin.html" class="nav-item"><span>🛠️ Admin</span></a>
+                <a href="superadmin.html" class="nav-item"><span>🔐 Superadmin</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-stat"><div><strong id="sideTotal">0</strong><span>Pesanan Hari Ini</span></div></div>
+                <div class="sidebar-stat" style="margin-top:10px; background: rgba(255,255,255,0.08);"><div><strong id="sideOmzet" style="font-size:15px;">Rp 0</strong><span>Total Omzet</span></div></div>
+                <button onclick="location.href='logout.html'" style="width:100%; margin-top:12px; background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:700; cursor:pointer;">Keluar</button>
+                <p style="font-size:10px; color:rgba(255,255,255,0.7); text-align:center; margin-top:6px;" id="loginUserInfo">-</p>
+                <p style="font-size:10px; color:#dcfce7; text-align:center; background:rgba(255,255,255,0.1); padding:4px; border-radius:6px; font-weight:700;">KASIR</p>
+            </div>
+        </aside>
+        <div class="main">
+            <header class="topbar kasir-topbar">
+                <div class="topbar-inner">
+                    <div class="topbar-title" style="display:flex; align-items:center; gap:14px;">
+                        <img src="static/assets/AGK.jpg" alt="Logo" style="width:48px; height:48px; border-radius:12px; border:2px solid rgba(255,255,255,0.3); background:white;">
+                        <div><h3>Panel Kasir</h3><p>Lihat pesanan customer & tagihan — warung.angkringanlordalan.my.id/kasir.html</p></div>
+                    </div>
+                    <div class="topbar-info">
+                        <span class="role-pill kasir">⚡ KASIR</span>
+                        <span id="jamLive" class="badge badge-live"></span>
+                    </div>
+                </div>
+                <div class="hero-banner" style="background: linear-gradient(90deg,#22c55e,#86efac); color:#14532d;">
+                    <div class="hero-text" style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:28px;">⚡</span>
+                        <div><h4>Siap Melayani, Kasir!</h4><p>Antri → Proses → Siap → Bayar. Shortcut: Klik Bayar untuk Lunas</p></div>
+                    </div>
+                    <div class="hero-badge"><span id="heroUser">-</span><span class="promo">Kasir Mode</span></div>
+                </div>
+            </header>
+            <main class="wrapper">
+                <div id="toastContainer" class="toast-container"></div>
+                <div class="card table-card" id="kasirPanel" style="border:2px solid #16a34a;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);">
+                        <h3 style="color:#14532d;">📋 Pesanan Customer & Tagihan</h3>
+                        <span class="nota-badge" style="background:#14532d; color:#dcfce7;">Live</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <div class="grid-2" style="margin-bottom:16px;">
+                            <div class="stat" style="background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color:#86efac;"><div><strong id="kasirTotalPesanan">0</strong><span>Antri / Proses</span></div></div>
+                            <div class="stat" style="background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;"><div><strong id="kasirTotalTagihan">Rp 0</strong><span>Belum Lunas</span></div></div>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                            <select id="kasirFilter" onchange="renderKasirPanel()" style="padding:8px 12px; border:1.5px solid #fde68a; border-radius:10px; font-size:12px; background:#fffbeb;"><option value="">Semua Status</option><option>Antri</option><option>Proses Masak</option><option>Siap Saji</option><option>Selesai / Lunas</option></select>
+                            <input id="kasirCari" type="text" placeholder="Cari nota / nama..." oninput="renderKasirPanel()" style="flex:1; min-width:180px; padding:8px 12px; border:1.5px solid #fde68a; border-radius:10px; font-size:12px; background:#fffbeb;">
+                        </div>
+                        <div class="table-wrap"><table><thead><tr><th>Nota / Waktu</th><th>Customer / Meja</th><th>Menu Dipilih (qty x harga)</th><th>Total Bayar</th><th>Status</th><th>Aksi Kasir</th></tr></thead><tbody id="tbodyKasir"><tr class="empty-row"><td colspan="6">Belum ada pesanan.</td></tr></tbody></table></div>
+                    </div>
+                </div>
+                <div class="card table-card" id="daftar" style="margin-top:28px;">
+                    <div class="card-header"><h3>📦 Daftar Pesanan</h3><div class="table-actions"><input id="cari" type="text" placeholder="Cari..." oninput="filterData()"><button class="btn btn-small btn-danger" onclick="hapusSemua()">Hapus Semua</button></div></div>
+                    <div class="table-wrap"><table id="tabelPesanan"><thead><tr><th>No Nota</th><th>Waktu</th><th>Pelanggan</th><th>Pesanan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tbodyPesanan"><tr class="empty-row"><td colspan="7">Belum ada.</td></tr></tbody></table></div>
+                </div>
+                <div class="card table-card" id="pembayaran" style="margin-top:28px;">
+                    <div class="card-header"><h3>💰 Pembayaran</h3><span class="nota-badge" id="badgePembayaran">0 Transaksi</span></div>
+                    <div style="padding:22px;">
+                        <div class="grid-2" style="margin-bottom:18px;"><div class="stat" style="background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;"><div><strong id="bayarOmzet">Rp 0</strong><span>Total Omzet</span></div></div><div class="stat" style="background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color:#86efac;"><div><strong id="bayarLunas">Rp 0</strong><span>Sudah Lunas</span></div></div></div>
+                        <div class="grid-2" style="margin-bottom:18px;"><div class="stat"><div><strong id="bayarBelum">Rp 0</strong><span>Belum Lunas</span></div></div><div class="stat"><div><strong id="bayarInfo">0 Lunas / 0 Belum</strong><span>Status</span></div></div></div>
+                        <div class="table-wrap"><table><thead><tr><th>No Nota</th><th>Pelanggan / Meja</th><th>Total</th><th>Metode</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tbodyPembayaran"><tr class="empty-row"><td colspan="6">Belum ada.</td></tr></tbody></table></div>
+                    </div>
+                </div>
+                <footer class="footer"><p><strong>Kasir Panel</strong> — warung.angkringanlordalan.my.id/kasir.html</p></footer>
+            </main>
+        </div>
+    </div>
+    <div id="cartFab" class="cart-fab" onclick="document.getElementById('daftar').scrollIntoView({behavior:'smooth'})"><span>🛒</span><span class="badge" id="fabBadge">0</span><span id="fabTotal">Rp 0</span></div>
+    <script src="static/js/script.js"></script>
+    <script>
+    let heartbeatInterval=null;
+    function setActive(el){document.querySelectorAll('.nav-item').forEach(a=>a.classList.remove('active'));el.classList.add('active');}
+    window.addEventListener("DOMContentLoaded", ()=>{
+        const u=sessionStorage.getItem("ald_user")||"-"; const r=sessionStorage.getItem("ald_role")||"kasir";
+        document.getElementById("loginUserInfo").textContent="Login: "+u+" ("+r+")";
+        document.getElementById("heroUser").textContent=u;
+        function sendHeartbeat(){ const t=sessionStorage.getItem("ald_token")||localStorage.getItem("ald_token"); if(!t||t==="local-fallback-token") return; if(document.hidden) return; fetch((location.port==="8000"?"/api":"http://127.0.0.1:8000/api")+"/auth/heartbeat",{method:"POST",headers:{"Authorization":"Bearer "+t}}).catch(()=>{}); }
+        sendHeartbeat(); heartbeatInterval=setInterval(sendHeartbeat,15000);
+        setTimeout(()=>{ if(typeof renderKasirPanel==="function") renderKasirPanel(); }, 800);
+        setInterval(()=>{ if(typeof renderKasirPanel==="function") renderKasirPanel(); }, 8000);
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Superadmin - Angkringan Lor Dalan</title>
+    <link rel="icon" type="image/jpeg" href="static/assets/AGK.jpg">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        .super-topbar { background: linear-gradient(135deg,#111827 0%,#1f2937 40%,#451a03 100%); }
+        .role-pill.superadmin { background:#f59e0b; color:#111827; padding:6px 12px; border-radius:999px; font-size:11px; font-weight:800; }
+    </style>
+</head>
+<body class="role-superadmin">
+    <script>
+    (function(){
+        const token = sessionStorage.getItem("ald_token") || localStorage.getItem("ald_token");
+        if(!token){ alert("Akses Superadmin butuh login."); location.replace("login.html"); return; }
+        if(token !== "local-fallback-token"){
+            const API_BASE = (location.port === "8000" ? "/api" : "http://127.0.0.1:8000/api");
+            fetch(API_BASE + "/auth/me", {headers:{"Authorization":"Bearer "+token}})
+            .then(r=>{ if(!r.ok) throw new Error("invalid"); return r.json(); })
+            .then(u=>{
+                if(u.role!=="superadmin"){ alert("Hanya superadmin bisa akses superadmin.html"); location.replace("admin.html"); return; }
+                sessionStorage.setItem("ald_user", u.username); sessionStorage.setItem("ald_role", u.role);
+            })
+            .catch(()=>{ sessionStorage.removeItem("ald_token"); localStorage.removeItem("ald_token"); location.replace("login.html"); });
+        }
+    })();
+    </script>
+    <div class="app">
+        <aside class="sidebar" style="background: linear-gradient(180deg,#111827 0%,#1f2937 50%,#451a03 100%);">
+            <div class="sidebar-brand">
+                <div class="brand-logo"><img src="static/assets/AGK.jpg" alt="Logo"></div>
+                <div><h2>SUPERADMIN</h2><span>ANGKRINGAN</span><p>warung.angkringanlordalan.my.id/superadmin.html</p></div>
+            </div>
+            <nav class="sidebar-nav">
+                <p class="nav-label">SUPERADMIN MENU</p>
+                <a href="#dashboard" class="nav-item active"><span>📊 Dashboard</span></a>
+                <a href="#superadminPanel" class="nav-item"><span>🔐 Approval & Online</span></a>
+                <a href="#adminPanel" class="nav-item"><span>🛠️ Kelola Menu</span></a>
+                <a href="#kasirPanel" class="nav-item"><span>📋 Panel Kasir</span></a>
+                <p class="nav-label" style="margin-top:18px;">LAINNYA</p>
+                <a href="index.html" class="nav-item"><span>🏠 Pelanggan</span></a>
+                <a href="kasir.html" class="nav-item"><span>⚡ Kasir</span></a>
+                <a href="admin.html" class="nav-item"><span>🛠️ Admin</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-stat"><div><strong id="sideTotal">0</strong><span>Pesanan Hari Ini</span></div></div>
+                <div class="sidebar-stat" style="margin-top:10px; background: rgba(255,255,255,0.08);"><div><strong id="sideOmzet" style="font-size:15px;">Rp 0</strong><span>Total Omzet</span></div></div>
+                <button onclick="location.href='logout.html'" style="width:100%; margin-top:12px; background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:700; cursor:pointer;">Keluar</button>
+                <p style="font-size:10px; color:rgba(255,255,255,0.6); text-align:center; margin-top:6px;" id="loginUserInfo">-</p>
+                <p style="font-size:10px; color:#f59e0b; text-align:center; background:rgba(255,255,255,0.1); padding:4px; border-radius:6px; font-weight:700;">SUPERADMIN</p>
+            </div>
+        </aside>
+        <div class="main">
+            <header class="topbar super-topbar">
+                <div class="topbar-inner">
+                    <div class="topbar-title" style="display:flex; align-items:center; gap:14px;">
+                        <img src="static/assets/AGK.jpg" alt="Logo" style="width:48px; height:48px; border-radius:12px; border:2px solid rgba(255,255,255,0.3); background:white;">
+                        <div><h3>Panel Superadmin</h3><p>Full Access — Approve & Monitor — warung.angkringanlordalan.my.id/superadmin.html</p></div>
+                    </div>
+                    <div class="topbar-info">
+                        <span class="role-pill superadmin">🔐 SUPERADMIN</span>
+                        <span id="jamLive" class="badge badge-live"></span>
+                    </div>
+                </div>
+                <div class="hero-banner" style="background: linear-gradient(90deg,#f59e0b,#92400e); color:#111827;">
+                    <div class="hero-text" style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:28px;">🔐</span>
+                        <div><h4 style="color:#111827;">Full Access Superadmin</h4><p style="color:#451a03;">Approve kasir/admin & monitor online/offline real-time</p></div>
+                    </div>
+                    <div class="hero-badge"><span id="heroUser">-</span><span class="promo" style="background:#111827; color:#fde68a;">Superadmin</span></div>
+                </div>
+            </header>
+            <main class="wrapper">
+                <div id="toastContainer" class="toast-container"></div>
+                <div class="card" style="margin-bottom:28px;">
+                    <div class="card-header"><h3>📊 Ringkasan Warung</h3><span class="nota-badge">Live</span></div>
+                    <div style="padding:22px;">
+                        <div class="grid-2"><div class="stat"><div><strong id="totalData">0</strong><span>Total Pesanan</span></div></div><div class="stat"><div><strong id="totalAntri">0</strong><span>Antri / Proses</span></div></div></div>
+                        <div class="stat" style="margin-top:12px; background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;"><div><strong id="totalOmzet">Rp 0</strong><span>Omzet Hari Ini</span></div></div>
+                    </div>
+                </div>
+                <div class="card table-card" id="superadminPanel" style="border:2px solid #92400e;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#451a03,#92400e); color:white;">
+                        <h3 style="color:white;">🔐 Approval & Monitor Online</h3>
+                        <span class="nota-badge" id="pendingCount" style="background:#f59e0b; color:#451a03;">0 Pending</span>
+                    </div>
+                    <div style="padding:22px;">
+                        <p style="font-size:12px; color:#78716c; margin-bottom:14px;">Kelola pendaftar & lihat kasir/admin online (contoh untuk <code>warung.../superadmin.html</code>).</p>
+                        <div id="pendingList" style="display:flex; flex-direction:column; gap:10px;"><p style="text-align:center; color:#78716c; padding:20px;">Memuat pending...</p></div>
+                        <div style="margin-top:14px; display:flex; gap:8px;">
+                            <button onclick="loadPendingUsers()" style="background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; padding:8px 14px; border-radius:10px; font-weight:700; cursor:pointer;">Refresh Pending</button>
+                            <button onclick="loadActiveUsers()" style="background:#dcfce7; border:1.5px solid #bbf7d0; color:#15803d; padding:8px 14px; border-radius:10px; font-weight:700; cursor:pointer;">Refresh Online</button>
+                        </div>
+                        <hr style="margin:20px 0; border:none; border-top:1.5px dashed #fde68a;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h4 style="font-size:13px; color:#451a03; font-weight:800; margin:0;">🟢 Online / Offline</h4>
+                            <span id="activeCount" style="background:#dcfce7; color:#15803d; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">0 Aktif</span>
+                        </div>
+                        <div id="activeList" style="display:flex; flex-direction:column; gap:8px;"><p style="text-align:center; color:#78716c; padding:16px;">Memuat aktif...</p></div>
+                        <div style="margin-top:12px;"><span id="heartbeatStatus" style="font-size:11px; color:#78716c;">Heartbeat: -</span></div>
+                    </div>
+                </div>
+                <div class="card table-card" id="adminPanel" style="margin-top:28px; border:2px solid #d97706;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#92400e,#d97706); color:white;"><h3 style="color:white;">🛠️ Kelola Menu (Admin)</h3><span class="nota-badge" id="adminMenuCount" style="background:white; color:#92400e;">16 Menu</span></div>
+                    <div style="padding:22px;">
+                        <div style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; padding:16px; margin-bottom:16px;">
+                            <h4 style="font-size:13px; color:#92400e; font-weight:800; margin:0 0 12px 0;">➕ Tambah / Edit Menu</h4>
+                            <div class="grid-2"><div class="form-group"><label>ID Menu *</label><input id="admId" type="text" placeholder="id unik"></div><div class="form-group"><label>Nama Menu *</label><input id="admNama" type="text" placeholder="Nama"></div></div>
+                            <div class="grid-2" style="margin-top:10px;"><div class="form-group"><label>Harga (Rp) *</label><input id="admHarga" type="number" placeholder="5000"></div><div class="form-group"><label>Kategori</label><select id="admKategori"><option>Nasi</option><option>Sate</option><option>Gorengan</option><option>Bakaran</option><option>Minuman</option><option>Mie</option></select></div></div>
+                            <div class="grid-2" style="margin-top:10px;"><div class="form-group"><label>Gambar</label><input id="admGambar" type="text" placeholder="static/images/nama.jpg"></div><div class="form-group"><label>Deskripsi</label><input id="admDeskripsi" type="text" placeholder="Deskripsi"></div></div>
+                            <div style="display:flex; gap:8px; margin-top:14px;"><button onclick="adminTambahMenu()" style="flex:1; background:#92400e; color:white; border:none; padding:11px; border-radius:10px; font-weight:800; cursor:pointer;">Simpan Menu</button><button onclick="adminResetForm()" style="background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; padding:11px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Reset</button><button onclick="adminLoadMenu()" style="background:white; color:#92400e; border:1.5px solid #fde68a; padding:11px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Reload</button></div>
+                            <p id="adminMsg" style="font-size:12px; margin-top:8px; display:none;"></p>
+                        </div>
+                        <div class="table-wrap"><table><thead><tr><th>ID / Gambar</th><th>Nama / Kategori</th><th>Harga</th><th>Status</th><th>Aksi Admin</th></tr></thead><tbody id="tbodyAdminMenu"><tr class="empty-row"><td colspan="5">Memuat...</td></tr></tbody></table></div>
+                    </div>
+                </div>
+                <div class="card table-card" id="kasirPanel" style="margin-top:28px; border:2px solid #16a34a;">
+                    <div class="card-header" style="background:linear-gradient(135deg,#15803d,#16a34a); color:white;"><h3 style="color:white;">📋 Panel Kasir — Pesanan & Tagihan</h3><span class="nota-badge" style="background:white; color:#15803d;">Kasir</span></div>
+                    <div style="padding:22px;">
+                        <div class="grid-2" style="margin-bottom:16px;"><div class="stat" style="background: linear-gradient(135deg,#dcfce7,#bbf7d0); border-color:#86efac;"><div><strong id="kasirTotalPesanan">0</strong><span>Antri / Proses</span></div></div><div class="stat" style="background: linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b;"><div><strong id="kasirTotalTagihan">Rp 0</strong><span>Belum Lunas</span></div></div></div>
+                        <div class="table-wrap"><table><thead><tr><th>Nota / Waktu</th><th>Customer / Meja</th><th>Menu Dipilih</th><th>Total Bayar</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tbodyKasir"><tr class="empty-row"><td colspan="6">Belum ada.</td></tr></tbody></table></div>
+                    </div>
+                </div>
+                <footer class="footer"><p><strong>Superadmin Panel</strong> — warung.angkringanlordalan.my.id/superadmin.html</p></footer>
+            </main>
+        </div>
+    </div>
+    <div id="cartFab" class="cart-fab"><span>🛒</span><span class="badge" id="fabBadge">0</span><span id="fabTotal">Rp 0</span></div>
+    <script src="static/js/script.js"></script>
+    <script>
+    let heartbeatInterval=null;
+    function setActive(el){document.querySelectorAll('.nav-item').forEach(a=>a.classList.remove('active'));el.classList.add('active');}
+    window.addEventListener("DOMContentLoaded", ()=>{
+        const u=sessionStorage.getItem("ald_user")||"-"; const r=sessionStorage.getItem("ald_role")||"superadmin";
+        document.getElementById("loginUserInfo").textContent="Login: "+u+" ("+r+")";
+        document.getElementById("heroUser").textContent=u;
+        function sendHeartbeat(){ const t=sessionStorage.getItem("ald_token")||localStorage.getItem("ald_token"); if(!t||t==="local-fallback-token") return; if(document.hidden) return; fetch((location.port==="8000"?"/api":"http://127.0.0.1:8000/api")+"/auth/heartbeat",{method:"POST",headers:{"Authorization":"Bearer "+t}}).catch(()=>{}); }
+        sendHeartbeat(); heartbeatInterval=setInterval(sendHeartbeat,15000);
+        loadPendingUsers(); loadActiveUsers(); setInterval(()=>{ loadPendingUsers(); loadActiveUsers(); }, 5000);
+        setTimeout(()=>{ if(typeof adminLoadMenu==="function") adminLoadMenu(); if(typeof renderKasirPanel==="function") renderKasirPanel(); }, 800);
+    });
+    async function loadPendingUsers(){
+        const API_BASE=(location.port==="8000"?"/api":"http://127.0.0.1:8000/api"); const token=sessionStorage.getItem("ald_token")||localStorage.getItem("ald_token"); if(!token) return;
+        try{ const res=await fetch(API_BASE+"/auth/pending",{headers:{"Authorization":"Bearer "+token}}); const el=document.getElementById("pendingList"); if(!el) return; if(!res.ok){ el.innerHTML="<p style='color:#dc2626; font-size:12px;'>Bukan superadmin</p>"; return;} const data=await res.json(); if(data.length===0){ el.innerHTML="<p style='color:#16a34a; text-align:center; padding:12px;'>Tidak ada pending.</p>"; document.getElementById("pendingCount").textContent="0 Pending"; return;} document.getElementById("pendingCount").textContent=data.length+" Pending"; el.innerHTML=data.map(u=>`<div style="display:flex; align-items:center; justify-content:space-between; background:#fffbeb; border:1.5px solid #fde68a; border-radius:12px; padding:12px; gap:10px;"><div><strong style="color:#451a03;">${u.username}</strong> <span style="background:#92400e; color:white; padding:2px 6px; border-radius:8px; font-size:10px;">${u.role}</span><br><small style="color:#78716c;">${u.full_name||"-"} • ${u.email||"-"}</small></div><div style="display:flex; gap:6px;"><button onclick="approveUser(${u.id})" style="background:#16a34a; color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:700; cursor:pointer;">Approve</button><button onclick="rejectUser(${u.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; padding:8px 12px; border-radius:8px; font-weight:700; cursor:pointer;">Tolak</button></div></div>`).join(""); }catch(e){ console.error(e); }
+    }
+    async function approveUser(id){ if(!confirm("Approve?")) return; const API_BASE=(location.port==="8000"?"/api":"http://127.0.0.1:8000/api"); const token=sessionStorage.getItem("ald_token")||localStorage.getItem("ald_token"); const res=await fetch(API_BASE+"/auth/approve/"+id,{method:"POST",headers:{"Authorization":"Bearer "+token}}); if(res.ok){ alert("Approved!"); loadPendingUsers(); loadActiveUsers(); } else { const j=await res.json(); alert(j.detail||"Gagal"); } }
+    async function rejectUser(id){ if(!confirm("Tolak & hapus?")) return; const API_BASE=(location.port==="8000"?"/api":"http://127.0.0.1:8000/api"); const token=sessionStorage.getItem("ald_token")||localStorage.getItem("ald_token"); const res=await fetch(API_BASE+"/auth/reject/"+id,{method:"POST",headers:{"Authorization":"Bearer "+token}}); if(res.ok){ alert("Ditolak!"); loadPendingUsers(); } else { const j=await res.json(); alert(j.detail||"Gagal"); } }
+    async function loadActiveUsers(){
+        const API_BASE=(location.port==="8000"?"/api":"http://127.0.0.1:8000/api"); const token=sessionStorage.getItem("ald_token")||localStorage.getItem("ald_token"); if(!token) return; const el=document.getElementById("activeList"); if(!el) return;
+        try{ const res=await fetch(API_BASE+"/auth/active",{headers:{"Authorization":"Bearer "+token}}); if(!res.ok){ el.innerHTML="<p style='color:#dc2626; font-size:12px;'>Butuh superadmin</p>"; return;} const data=await res.json(); if(data.length===0){ el.innerHTML="<p style='text-align:center; color:#78716c; padding:12px;'>Kosong</p>"; return;} const online=data.filter(u=>u.is_online).length; document.getElementById("activeCount").textContent=online+" Online / "+data.length+" Aktif"; el.innerHTML=data.map(u=>{ let dot=u.is_online?"#16a34a":(u.online_status==="idle"?"#f59e0b":"#a8a29e"); let txt=u.is_online?"Online":(u.online_status==="idle"?"Idle":"Offline"); let badge=u.role==="superadmin"?"#451a03":(u.role==="admin"?"#92400e":"#15803d"); return `<div style="display:flex; align-items:center; justify-content:space-between; background:white; border:1.5px solid #fde68a; border-radius:12px; padding:10px 12px; gap:10px;"><div style="display:flex; align-items:center; gap:10px; flex:1;"><span style="width:10px; height:10px; border-radius:50%; background:${dot}; display:inline-block;"></span><div><strong style="color:#451a03; font-size:13px;">${u.username}</strong> <span style="background:${badge}; color:white; padding:2px 6px; border-radius:8px; font-size:10px;">${u.role}</span> <span style="font-size:10px; color:${dot}; font-weight:700;">● ${txt}</span><br><small style="color:#78716c; font-size:11px;">${u.full_name||"-"} • ${u.last_seen_text}</small></div></div><small style="color:#78716c; font-size:10px;">${u.last_active?new Date(u.last_active).toLocaleString('id-ID'):"never"}</small></div>`;}).join(""); }catch(e){ console.error(e); }
+    }
+    </script>
+</body>
+</html>
