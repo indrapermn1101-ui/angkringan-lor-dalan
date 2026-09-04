@@ -33,9 +33,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def get_user_by_username(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
+    # FIX: case-insensitive & trim agar Lana/LANA/lana semua bisa login sesuai register lana
+    # Username disimpan lowercase saat register, login juga dicocokkan lower
+    if username:
+        username = username.strip()
+    return db.query(models.User).filter(models.User.username.ilike(username)).first()
 
 def authenticate_user(db: Session, username: str, password: str):
+    if username:
+        username = username.strip()
     user = get_user_by_username(db, username)
     if not user:
         return None

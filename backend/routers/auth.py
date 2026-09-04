@@ -72,11 +72,13 @@ def register_public(payload: schemas.UserRegisterPublic, db: Session = Depends(g
     """
     if payload.role not in ["kasir", "admin"]:
         raise HTTPException(status_code=400, detail="Role hanya boleh 'kasir' atau 'admin'")
+    # Normalisasi username: trim + lower agar login case-insensitive (fix Lana/lana)
+    payload.username = payload.username.strip()
     if len(payload.username) < 3:
         raise HTTPException(status_code=400, detail="Username minimal 3 karakter")
     if len(payload.password) < 6:
         raise HTTPException(status_code=400, detail="Password minimal 6 karakter")
-    existing = db.query(models.User).filter(models.User.username == payload.username).first()
+    existing = db.query(models.User).filter(models.User.username.ilike(payload.username)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username sudah ada")
     if payload.email:
@@ -84,7 +86,7 @@ def register_public(payload: schemas.UserRegisterPublic, db: Session = Depends(g
         if existing_email:
             raise HTTPException(status_code=400, detail="Email sudah ada")
     new_user = models.User(
-        username=payload.username,
+        username=payload.username.strip().lower(),  # simpan lower agar konsisten dengan login
         email=payload.email,
         full_name=payload.full_name,
         hashed_password=get_password_hash(payload.password),
