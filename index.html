@@ -154,7 +154,21 @@
                 </div>
             </header>
 
+            <div id="toastContainer" class="toast-container"></div>
             <main class="wrapper">
+                <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;">
+                    <div style="flex:1; min-width:220px; position:relative;">
+                        <input id="searchMenu" type="text" placeholder="🔍 Cari menu: nasi kucing, kopi joss..." oninput="filterMenu()" style="width:100%; padding:12px 16px 12px 42px; border:1.5px solid var(--border); border-radius:999px; background:white; font-size:13px; outline:none;">
+                        <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted);">⌕</span>
+                    </div>
+                    <div class="chips" style="margin:0;">
+                        <button class="chip active" onclick="setChip(this,'')">Semua</button>
+                        <button class="chip" onclick="setChip(this,'Nasi')">Nasi</button>
+                        <button class="chip" onclick="setChip(this,'Sate')">Sate</button>
+                        <button class="chip" onclick="setChip(this,'Gorengan')">Gorengan</button>
+                        <button class="chip" onclick="setChip(this,'Minuman')">Minuman</button>
+                    </div>
+                </div>
 
                 <!-- 1. DAFTAR MAKANAN -->
                 <div class="card" id="makanan" style="margin-bottom:28px;">
@@ -660,6 +674,11 @@
                 </footer>
             </main>
         </div>
+    </div>
+    <div id="cartFab" class="cart-fab" onclick="document.getElementById('formPesanan').scrollIntoView({behavior:'smooth'})">
+        <span>🛒 Keranjang</span>
+        <span class="badge" id="fabBadge">0</span>
+        <span id="fabTotal">Rp 0</span>
     </div>
 
     <script src="static/js/script.js"></script>

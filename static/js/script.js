@@ -162,6 +162,46 @@ function startJamLive(){
     setInterval(tick, 60000);
 }
 
+function showToast(msg, type="info"){
+    const c = document.getElementById("toastContainer");
+    if(!c) return alert(msg);
+    const el = document.createElement("div");
+    el.className = "toast " + type;
+    const icon = type==="success" ? "✅" : type==="error" ? "❌" : "💡";
+    el.innerHTML = `<span style="font-size:16px;">${icon}</span><span style="flex:1;">${msg}</span>`;
+    c.appendChild(el);
+    setTimeout(()=> el.remove(), 3200);
+}
+let activeChip = "";
+function setChip(btn, val){
+    document.querySelectorAll(".chip").forEach(b=> b.classList.remove("active"));
+    btn.classList.add("active");
+    activeChip = val;
+    filterMenu();
+}
+function filterMenu(){
+    const q = (document.getElementById("searchMenu")?.value || "").toLowerCase();
+    const cards = document.querySelectorAll(".menu-item");
+    cards.forEach(card=>{
+        const nama = card.querySelector(".menu-info strong")?.textContent.toLowerCase() || "";
+        const kat = card.querySelector(".menu-info small")?.textContent.toLowerCase() || "";
+        const matchQ = !q || nama.includes(q) || kat.includes(q);
+        const matchChip = !activeChip || kat.includes(activeChip.toLowerCase());
+        card.style.display = (matchQ && matchChip) ? "" : "none";
+        // highlight
+        if(q && matchQ){
+            const strong = card.querySelector(".menu-info strong");
+            if(strong && !strong.dataset.orig) strong.dataset.orig = strong.textContent;
+            const orig = strong.dataset.orig;
+            const idx = orig.toLowerCase().indexOf(q);
+            if(idx>=0) strong.innerHTML = orig.slice(0,idx) + `<mark class="hl">${orig.slice(idx, idx+q.length)}</mark>` + orig.slice(idx+q.length);
+        } else {
+            const strong = card.querySelector(".menu-info strong");
+            if(strong && strong.dataset.orig) strong.textContent = strong.dataset.orig;
+        }
+    });
+}
+
 function formatRupiah(num){
     return "Rp " + Number(num).toLocaleString("id-ID");
 }
@@ -225,13 +265,16 @@ function renderMenuMakananMinuman(){
 function tambahMenu(id){
     const item = DAFTAR_MENU.find(m=> m.id===id);
     if(item && item.is_sold){
-        alert("Maaf, " + item.nama + " sedang HABIS (SOLD). Silakan pilih menu lain, Lur!");
+        showToast("Maaf, " + item.nama + " sedang HABIS (SOLD). Pilih menu lain, Lur!", "error");
         return;
     }
     keranjang[id] = (keranjang[id] || 0) + 1;
     renderMenuMakananMinuman();
     updateKeranjang();
     syncKeranjangLangsung();
+    showToast(item.nama + " +1 ditambahkan", "success");
+    // haptic
+    if(navigator.vibrate) navigator.vibrate(20);
 }
 
 function kurangMenu(id){
@@ -265,8 +308,16 @@ function updateKeranjang(){
     if(jmlEl) jmlEl.textContent = totalItem + " item";
     if(totalEl) totalEl.textContent = formatRupiah(total);
 
+    // FAB
+    const fab = document.getElementById("cartFab");
+    const fabBadge = document.getElementById("fabBadge");
+    const fabTotal = document.getElementById("fabTotal");
+    if(fab){
+        if(totalItem>0){ fab.classList.add("show"); if(fabBadge) fabBadge.textContent=totalItem; if(fabTotal) fabTotal.textContent=formatRupiah(total); }
+        else fab.classList.remove("show");
+    }
     if(ids.length===0){
-        wrap.innerHTML = `<p class="keranjang-empty">Belum ada menu dipilih. Klik + pada Daftar Makanan / Minuman di atas!</p>`;
+        wrap.innerHTML = `<p class="keranjang-empty" style="text-align:center; padding:20px;"><span style="font-size:32px; display:block; margin-bottom:8px;">🍽️</span>Belum ada menu dipilih.<br><small>Klik + pada menu, ada animasi & toast!</small></p>`;
         return;
     }
     wrap.innerHTML = ids.map(id=>{
@@ -399,13 +450,15 @@ async function simpanPesanan() {
     const keranjangData = getKeranjangDetail();
 
     if (!nama || !meja) {
-        alert("Mohon lengkapi: Nama Pelanggan dan No. Meja / Bungkus!");
+        showToast("Mohon lengkapi: Nama Pelanggan dan No. Meja / Bungkus!", "error");
         if (!nama) document.getElementById("nama").focus();
         else document.getElementById("meja").focus();
+        document.getElementById("nama")?.classList.add("shake");
+        setTimeout(()=> document.getElementById("nama")?.classList.remove("shake"), 600);
         return;
     }
     if (!keranjangData) {
-        alert("Pilih minimal 1 menu dulu, Lur! Klik + pada Daftar Makanan / Minuman di atas.");
+        showToast("Pilih minimal 1 menu dulu, Lur! Klik + pada menu di atas.", "info");
         return;
     }
 
@@ -444,7 +497,7 @@ async function simpanPesanan() {
             document.getElementById("hasil").scrollIntoView({behavior:"smooth"});
             return;
         } else {
-            alert("Gagal simpan ke Server SQLite, fallback ke LocalStorage. Cek backend jalan di http://127.0.0.1:8000/docs");
+            showToast("Gagal simpan ke Server, fallback ke LocalStorage.", "error");
         }
     }
 
