@@ -129,27 +129,26 @@
                     <div class="topbar-title" style="display:flex; align-items:center; gap:14px;">
                         <img src="static/assets/AGK.jpg" alt="Logo" style="width:48px; height:48px; border-radius:12px; object-fit:cover; border:2px solid rgba(255,255,255,0.3); background:white; flex-shrink:0;">
                         <div>
-                            <h3>Angkringan Lor Dalan</h3>
-                            <p>Cita Rasa Jogja - Harga Merakyat - Buka Sore Sampai Dini Hari</p>
+                            <h3 id="topbarTitle">Angkringan Lor Dalan</h3>
+                            <p id="topbarSub">Cita Rasa Jogja - Harga Merakyat - Buka Sore Sampai Dini Hari</p>
                         </div>
                     </div>
                     <div class="topbar-info">
-                        <span>Sambi, Boyolali</span>
-                        <span class="badge">Buka: 17.00 - 02.00</span>
+                        <span id="rolePillTop" style="background:white; color:var(--primary); padding:6px 12px; border-radius:999px; font-size:11px; font-weight:800; display:flex; align-items:center; gap:6px;"><span id="rolePillIcon">🍽️</span> <span id="rolePillText">PELANGGAN</span></span>
                         <span id="jamLive" class="badge badge-live"></span>
                     </div>
                 </div>
-                <div class="hero-banner">
+                <div class="hero-banner" id="heroBanner">
                     <div class="hero-text" style="display:flex; align-items:center; gap:12px;">
                         <img src="static/assets/AGK.jpg" alt="Logo" style="width:42px; height:42px; border-radius:10px; object-fit:cover; border:2px solid #451a03; background:white; flex-shrink:0;">
                         <div>
-                            <h4>Selamat Datang di Angkringan Lor Dalan!</h4>
-                            <p>Nasi Kucing - Sate-Satean - Gorengan Anget - Kopi Joss Arang - Wedang Jahe - Indomie</p>
+                            <h4 id="heroTitle">Selamat Datang, Lur!</h4>
+                            <p id="heroSub">Nasi Kucing - Sate-Satean - Gorengan Anget - Kopi Joss Arang</p>
                         </div>
                     </div>
-                    <div class="hero-badge">
+                    <div class="hero-badge" id="heroBadge">
                         <span>0812-3456-7890</span>
-                        <span class="promo">GRATIS Kerupuk!</span>
+                        <span class="promo" id="heroPromo">GRATIS Kerupuk!</span>
                     </div>
                 </div>
             </header>
@@ -684,17 +683,38 @@
 
     <script src="static/js/script.js"></script>
     <script>
-    // === ROLE UX: beda tema & banner per role ===
+    // === ROLE UX: beda tema, topbar, hero, sidebar tanpa banner besar ===
     function applyRoleUX(role){
+        const r = role || "pelanggan";
         document.body.classList.remove("role-pelanggan","role-kasir","role-admin","role-superadmin");
-        document.body.classList.add("role-" + (role||"pelanggan"));
-        document.querySelectorAll(".role-banner").forEach(b=> b.classList.remove("show"));
-        const map = {pelanggan:"bannerPelanggan", kasir:"bannerKasir", admin:"bannerAdmin", superadmin:"bannerSuper"};
-        const id = map[role] || "bannerPelanggan";
-        const el = document.getElementById(id);
-        if(el) el.classList.add("show");
-        // Pelanggan: search chips lebih besar, kasir: compact
-        document.documentElement.style.setProperty("--chip-scale", role==="pelanggan" ? "1.05" : "1");
+        document.body.classList.add("role-" + r);
+        // Topbar pill & hero berbeda jelas per role
+        const cfg = {
+            pelanggan:{icon:"🍽️", pill:"PELANGGAN", title:"Angkringan Lor Dalan", sub:"Cita Rasa Jogja - Harga Merakyat", heroT:"Selamat Datang, Lur!", heroS:"Nasi Kucing • Sate • Gorengan • Kopi Joss — Klik + untuk pesan", promo:"GRATIS Kerupuk!"},
+            kasir:{icon:"⚡", pill:"KASIR", title:"Kasir — Siap Melayani", sub:"Kelola antrian & tagihan", heroT:"Mode Kasir — Antrian Hari Ini", heroS:"Fokus: Pesanan Antri → Proses → Bayar", promo:"Shift+B Bayar"},
+            admin:{icon:"🛠️", pill:"ADMIN", title:"Admin — Kelola Menu", sub:"Atur SOLD/HABIS & harga", heroT:"Mode Admin — Menu Warung", heroS:"CRUD Menu — Perubahan langsung ke pelanggan", promo:"Kelola SOLD"},
+            superadmin:{icon:"🔐", pill:"SUPERADMIN", title:"Superadmin — Monitor Warung", sub:"Approve & pantau online", heroT:"Mode Superadmin — Full Access", heroS:"Approve pendaftar & monitor kasir/admin online", promo:"Full Access"}
+        };
+        const c = cfg[r] || cfg.pelanggan;
+        const pillIcon = document.getElementById("rolePillIcon");
+        const pillText = document.getElementById("rolePillText");
+        const topTitle = document.getElementById("topbarTitle");
+        const topSub = document.getElementById("topbarSub");
+        const heroT = document.getElementById("heroTitle");
+        const heroS = document.getElementById("heroSub");
+        const heroP = document.getElementById("heroPromo");
+        if(pillIcon) pillIcon.textContent=c.icon;
+        if(pillText) pillText.textContent=c.pill;
+        if(topTitle) topTitle.textContent=c.title;
+        if(topSub) topSub.textContent=c.sub;
+        if(heroT) heroT.textContent=c.heroT;
+        if(heroS) heroS.textContent=c.heroS;
+        if(heroP) heroP.textContent=c.promo;
+        // Sidebar stats: pelanggan sembunyikan angka sensitif, kasir/admin/superadmin tampilkan
+        const sideTotal = document.getElementById("sideTotal")?.parentElement?.parentElement;
+        const sideOmzet = document.getElementById("sideOmzet")?.parentElement?.parentElement;
+        if(r==="pelanggan"){ if(sideTotal) sideTotal.style.opacity="0.6"; if(sideOmzet) sideOmzet.style.opacity="0.6"; }
+        else { if(sideTotal) sideTotal.style.opacity="1"; if(sideOmzet) sideOmzet.style.opacity="1"; }
     }
     // === RBAC Frontend Visibility ===
     function applyRoleVisibility(role){
