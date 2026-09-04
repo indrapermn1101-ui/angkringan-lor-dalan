@@ -156,6 +156,10 @@
 
             <div id="toastContainer" class="toast-container"></div>
             <main class="wrapper">
+                <div id="bannerPelanggan" class="role-banner pelanggan">🍽️ <b>Mode Pelanggan</b> — Jelajahi menu, klik + untuk pesan. Tanpa login, langsung makan lesehan! <span style="margin-left:auto; background:white; color:#92400e; padding:4px 10px; border-radius:999px; font-size:11px;">Tanpa Login</span></div>
+                <div id="bannerKasir" class="role-banner kasir">⚡ <b>Mode Kasir</b> — Fokus layani antrian. Lihat menu yang dipilih customer & tagihan di Panel Kasir. Shortcut: Bayar → Lunas <span style="margin-left:auto; background:white; color:#166534; padding:4px 10px; border-radius:999px; font-size:11px;">Shift+B Bayar</span></div>
+                <div id="bannerAdmin" class="role-banner admin">🛠️ <b>Mode Admin</b> — Kelola menu, atur SOLD/HABIS, edit harga. Perubahan langsung ke pelanggan. <span style="margin-left:auto; background:white; color:#9a3412; padding:4px 10px; border-radius:999px; font-size:11px;">CRUD Menu</span></div>
+                <div id="bannerSuper" class="role-banner superadmin">🔐 <b>Mode Superadmin</b> — Monitor semua kasir/admin online, approve pendaftar, audit omzet. <span style="margin-left:auto; background:#f59e0b; color:#111827; padding:4px 10px; border-radius:999px; font-size:11px;">Full Access</span></div>
                 <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;">
                     <div style="flex:1; min-width:220px; position:relative;">
                         <input id="searchMenu" type="text" placeholder="🔍 Cari menu: nasi kucing, kopi joss..." oninput="filterMenu()" style="width:100%; padding:12px 16px 12px 42px; border:1.5px solid var(--border); border-radius:999px; background:white; font-size:13px; outline:none;">
@@ -683,8 +687,21 @@
 
     <script src="static/js/script.js"></script>
     <script>
+    // === ROLE UX: beda tema & banner per role ===
+    function applyRoleUX(role){
+        document.body.classList.remove("role-pelanggan","role-kasir","role-admin","role-superadmin");
+        document.body.classList.add("role-" + (role||"pelanggan"));
+        document.querySelectorAll(".role-banner").forEach(b=> b.classList.remove("show"));
+        const map = {pelanggan:"bannerPelanggan", kasir:"bannerKasir", admin:"bannerAdmin", superadmin:"bannerSuper"};
+        const id = map[role] || "bannerPelanggan";
+        const el = document.getElementById(id);
+        if(el) el.classList.add("show");
+        // Pelanggan: search chips lebih besar, kasir: compact
+        document.documentElement.style.setProperty("--chip-scale", role==="pelanggan" ? "1.05" : "1");
+    }
     // === RBAC Frontend Visibility ===
     function applyRoleVisibility(role){
+        applyRoleUX(role);
         const isPelanggan = !role || role==="pelanggan";
         const isKasir = role==="kasir";
         const isAdmin = role==="admin";

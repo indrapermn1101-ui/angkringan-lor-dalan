@@ -665,8 +665,30 @@ mark.hl { background: #fde68a; color: #92400e; padding:0 2px; border-radius:4px;
 .cart-fab.show { transform:none; opacity:1; }
 .cart-fab .badge { background: white; color: #92400e; padding:2px 8px; border-radius:999px; font-size:11px; }
 
+/* === ROLE-SPECIFIC THEMES === */
+body.role-pelanggan { --primary:#92400e; --accent:#f59e0b; }
+body.role-pelanggan .topbar { background: linear-gradient(135deg,#451a03 0%,#78350f 40%,#92400e 70%,#b45309 100%); }
+body.role-pelanggan .sidebar { background: linear-gradient(180deg,#451a03 0%,#78350f 50%,#92400e 100%); }
+body.role-kasir { --primary:#15803d; --primary-dark:#166534; --accent:#22c55e; --border:#bbf7d0; --border-strong:#86efac; --bg-gradient: radial-gradient(1000px 500px at 0% 0%, #dcfce7 0%, transparent 60%), #f0fdf4; }
+body.role-kasir .topbar { background: linear-gradient(135deg,#14532d 0%,#15803d 50%,#22c55e 100%); }
+body.role-kasir .sidebar { background: linear-gradient(180deg,#14532d 0%,#166534 50%,#15803d 100%); }
+body.role-kasir .card-header { background: linear-gradient(135deg,#dcfce7,#f0fdf4); }
+body.role-kasir .nota-badge { background:#14532d; color:#dcfce7; border-color:#15803d; }
+body.role-admin { --primary:#b45309; --primary-dark:#92400e; --accent:#f59e0b; --border:#fde68a; --bg-gradient: radial-gradient(1000px 500px at 100% 0%, #ffedd5 0%, transparent 60%), #fffbeb; }
+body.role-admin .topbar { background: linear-gradient(135deg,#7c2d12 0%,#92400e 40%,#d97706 70%,#f59e0b 100%); }
+body.role-admin .sidebar { background: linear-gradient(180deg,#7c2d12 0%,#92400e 50%,#b45309 100%); }
+body.role-superadmin { --primary:#1f2937; --primary-dark:#111827; --accent:#f59e0b; --border:#fde68a; --bg:#f9fafb; --bg-gradient: radial-gradient(900px 500px at 0% 0%, #fef3c7 0%, transparent 60%), #f9fafb; }
+body.role-superadmin .topbar { background: linear-gradient(135deg,#111827 0%,#1f2937 40%,#374151 70%,#92400e 100%); }
+body.role-superadmin .sidebar { background: linear-gradient(180deg,#111827 0%,#1f2937 50%,#451a03 100%); }
+body.role-superadmin .card { border-color:#e5e7eb; }
+.role-banner { display:none; padding:14px 20px; border-radius:14px; margin-bottom:18px; font-size:13px; font-weight:700; align-items:center; gap:12px; border:1.5px solid; }
+.role-banner.show { display:flex; animation: slideUp 0.4s ease; }
+.role-banner.pelanggan { background: linear-gradient(135deg,#fffbeb,#fef3c7); border-color:#fde68a; color:#92400e; }
+.role-banner.kasir { background: linear-gradient(135deg,#dcfce7,#f0fdf4); border-color:#bbf7d0; color:#166534; }
+.role-banner.admin { background: linear-gradient(135deg,#ffedd5,#fff7ed); border-color:#fed7aa; color:#9a3412; }
+.role-banner.superadmin { background: linear-gradient(135deg,#1f2937,#374151); border-color:#92400e; color:#fde68a; }
+
 /* Print */
-@media print {
     html { min-width: auto; }
     .sidebar, .hero-banner, .side, .actions, .table-actions, .footer, #formPesanan, .menu-grid, .keranjang, .total-bar { display: none !important; }
     .hasil { display: block !important; border: 2px solid #451a03 !important; margin: 0 !important; box-shadow: none !important; }
